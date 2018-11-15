@@ -174,12 +174,15 @@ int main(int argc, char *argv[]) {
     char *buf1 = (char *)malloc(1024);
     char *buf2 = (char *)malloc(1024);
     char *buf3 = (char *)malloc(1024);
-    sprintf(buf1, "-sym-files");
-    sprintf(buf2, "1");
-    sprintf(buf3, "%ld", nbytes);
+    char *buf4 = (char *)malloc(1024);
+    sprintf(buf1, "A");
+    sprintf(buf2, "-sym-files");
+    sprintf(buf3, "1");
+    sprintf(buf4, "%ld", nbytes);
     argv_copy[argv_copy_idx++] = buf1;
     argv_copy[argv_copy_idx++] = buf2;
     argv_copy[argv_copy_idx++] = buf3;
+    argv_copy[argv_copy_idx++] = buf4;
   }
 
   if (stdin_content_filename) {
