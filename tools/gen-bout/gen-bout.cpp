@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
   strcpy(argv_copy[0], argv[0]);
   argv_copy_idx = 1;
 
-
+  unsigned sym_file_offset = 0;
   for (i = 1; i < (unsigned)argc; i++) {
     if (strcmp(argv[i], "--sym-stdout") == 0 ||
         strcmp(argv[i], "-sym-stdout") == 0) {
@@ -120,8 +120,31 @@ int main(int argc, char *argv[]) {
                strcmp(argv[i], "-sym-file") == 0) {
       if (++i == (unsigned)argc || argv[i][0] == '-')
         print_usage_and_exit(argv[0]);
+      char name = 'A' + sym_file_offset++;
+      char *buf1 = (char *)malloc(1024);
+      char *buf2 = (char *)malloc(1024);
+      char *buf3 = (char *)malloc(1024);
+      char *buf4 = (char *)malloc(1024);
+      char* file_name = argv[i];
+      FILE *fp;
+      if ((fp = fopen(file_name, "r")) == NULL) {
+        fprintf(stderr, "Failure opening %s\n", file_name);
+      }
 
-      content_filenames_list[file_counter++] = argv[i];
+      fseek(fp, 0L, SEEK_END);
+      long nbytes = ftell(fp);
+      fclose(fp);
+
+      sprintf(buf1, &name);
+      sprintf(buf2, "-sym-files");
+      sprintf(buf3, "1");
+      sprintf(buf4, "%ld", nbytes);
+      argv_copy[argv_copy_idx++] = buf1;
+      argv_copy[argv_copy_idx++] = buf2;
+      argv_copy[argv_copy_idx++] = buf3;
+      argv_copy[argv_copy_idx++] = buf4;
+
+      content_filenames_list[file_counter++] = file_name;
     } else {
       long nbytes = strlen(argv[i]) + 1;
       static int total_args = 0;
@@ -179,18 +202,7 @@ int main(int argc, char *argv[]) {
 
      free(file_content);
 
-     char *buf1 = (char *)malloc(1024);
-     char *buf2 = (char *)malloc(1024);
-     char *buf3 = (char *)malloc(1024);
-     char *buf4 = (char *)malloc(1024);
-     sprintf(buf1, &name);
-     sprintf(buf2, "-sym-files");
-     sprintf(buf3, "1");
-     sprintf(buf4, "%ld", nbytes);
-     argv_copy[argv_copy_idx++] = buf1;
-     argv_copy[argv_copy_idx++] = buf2;
-     argv_copy[argv_copy_idx++] = buf3;
-     argv_copy[argv_copy_idx++] = buf4;
+
    }
   }
 
