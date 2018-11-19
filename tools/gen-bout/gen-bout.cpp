@@ -95,6 +95,7 @@ int main(int argc, char *argv[]) {
   strcpy(argv_copy[0], argv[0]);
   argv_copy_idx = 1;
 
+
   for (i = 1; i < (unsigned)argc; i++) {
     if (strcmp(argv[i], "--sym-stdout") == 0 ||
         strcmp(argv[i], "-sym-stdout") == 0) {
@@ -139,50 +140,58 @@ int main(int argc, char *argv[]) {
   }
 
   if (file_counter > 0) {
-    FILE *fp;
-    struct stat64 file_stat;
-    char *content_filename = content_filenames_list[file_counter - 1];
+   unsigned sym_file_offset = 0;
+   for (i = 0; i < file_counter; i++){
+     FILE *fp;
+     struct stat64 file_stat;
+     char *content_filename = content_filenames_list[i];
 
-    if ((fp = fopen(content_filename, "r")) == NULL ||
-        stat64(content_filename, &file_stat) < 0) {
-      fprintf(stderr, "Failure opening %s\n", content_filename);
-      print_usage_and_exit(argv[0]);
-    }
+     if ((fp = fopen(content_filename, "r")) == NULL ||
+         stat64(content_filename, &file_stat) < 0) {
+       fprintf(stderr, "Failure opening %s\n", content_filename);
+       print_usage_and_exit(argv[0]);
+     }
 
-    long nbytes = file_stat.st_size;
-    char filename[7] = "A-data";
-    char statname[12] = "A-data-stat";
 
-    unsigned char *file_content, *fptr;
-    if ((file_content = (unsigned char *)malloc(nbytes)) == NULL) {
-      fprintf(stderr, "Memory allocation failure\n");
-      exit(1);
-    }
+     long nbytes = file_stat.st_size;
+     char name = 'A' + sym_file_offset++;
+     printf("sym file name is %c\n", name);
+     char filename[7] = "?-data";
+     filename[0] = name;
+     char statname[12] = "?-data-stat";
+     statname[0] = name;
 
-    int read_char;
-    fptr = file_content;
-    while ((read_char = fgetc(fp)) != EOF) {
-      *fptr = (unsigned char)read_char;
-      fptr++;
-    }
+     unsigned char *file_content, *fptr;
+     if ((file_content = (unsigned char *)malloc(nbytes)) == NULL) {
+       fprintf(stderr, "Memory allocation failure\n");
+       exit(1);
+     }
 
-    push_obj(&b, filename, nbytes, file_content);
-    push_obj(&b, statname, sizeof(struct stat64), (unsigned char *)&file_stat);
+     int read_char;
+     fptr = file_content;
+     while ((read_char = fgetc(fp)) != EOF) {
+       *fptr = (unsigned char)read_char;
+       fptr++;
+     }
 
-    free(file_content);
+     push_obj(&b, filename, nbytes, file_content);
+     push_obj(&b, statname, sizeof(struct stat64), (unsigned char *)&file_stat);
 
-    char *buf1 = (char *)malloc(1024);
-    char *buf2 = (char *)malloc(1024);
-    char *buf3 = (char *)malloc(1024);
-    char *buf4 = (char *)malloc(1024);
-    sprintf(buf1, "A");
-    sprintf(buf2, "-sym-files");
-    sprintf(buf3, "1");
-    sprintf(buf4, "%ld", nbytes);
-    argv_copy[argv_copy_idx++] = buf1;
-    argv_copy[argv_copy_idx++] = buf2;
-    argv_copy[argv_copy_idx++] = buf3;
-    argv_copy[argv_copy_idx++] = buf4;
+     free(file_content);
+
+     char *buf1 = (char *)malloc(1024);
+     char *buf2 = (char *)malloc(1024);
+     char *buf3 = (char *)malloc(1024);
+     char *buf4 = (char *)malloc(1024);
+     sprintf(buf1, &name);
+     sprintf(buf2, "-sym-files");
+     sprintf(buf3, "1");
+     sprintf(buf4, "%ld", nbytes);
+     argv_copy[argv_copy_idx++] = buf1;
+     argv_copy[argv_copy_idx++] = buf2;
+     argv_copy[argv_copy_idx++] = buf3;
+     argv_copy[argv_copy_idx++] = buf4;
+   }
   }
 
   if (stdin_content_filename) {
