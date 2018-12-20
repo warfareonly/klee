@@ -2794,8 +2794,30 @@ void Executor::run(ExecutionState &initialState) {
     std::vector<SeedInfo> &v = seedMap[&initialState];
     
     for (std::vector<KTest*>::const_iterator it = usingSeeds->begin(), 
-           ie = usingSeeds->end(); it != ie; ++it)
-      v.push_back(SeedInfo(*it));
+           ie = usingSeeds->end(); it != ie; ++it) {
+        v.push_back(SeedInfo(*it));
+        int num_obj = SeedInfo(*it).input->numObjects;
+        for (int k = 0; k < num_obj ; k++) {
+            KTestObject obj = SeedInfo(*it).input->objects[k];
+            int num_bytes = obj.numBytes;
+            printf("seed-obj[%d].name = %s\n", k, obj.name);
+
+            if (strcmp(obj.name, "A-data-stat") == 0){
+                A_data_stat = (int*)malloc(num_bytes * sizeof(int));
+                for (int i = 0; i < num_bytes; i++) {
+                    A_data_stat[i] = obj.bytes[i];
+                    printf("%d ", obj.bytes[i]);
+                }
+            } else if (strcmp(obj.name, "A-data") == 0){
+                A_data = (int*)malloc(num_bytes * sizeof(int));
+                for (int i = 0; i < num_bytes; i++) {
+                    A_data[i] = obj.bytes[i];
+                    printf("%d ", A_data[i]);
+                }
+            }
+
+        }
+    }
 
     int lastNumSeeds = usingSeeds->size()+10;
     time::Point lastTime, startTime = lastTime = time::getWallTime();
@@ -3241,9 +3263,25 @@ void Executor::callExternalFunction(ExecutionState &state,
     if (ExternalCalls == ExternalCallPolicy::All) { // don't bother checking uniqueness
       *ai = optimizer.optimizeExpr(*ai, true);
       ref<ConstantExpr> ce;
-      bool success = solver->getValue(state, *ai, ce);
-      assert(success && "FIXME: Unhandled solver failure");
-      (void) success;
+      if (usingSeeds) {
+//          errs() << "ai= " << *ai << "\n";
+          ref<Expr> arg = cloneTree(*ai);
+//          errs() << "arg= " << arg << "\n";
+          int numKids = arg.get()->getNumKids();
+          for (int l = 0; l < numKids; l++) {
+              traverseTree(arg, arg);
+          }
+
+          bool success = solver->getValue(state, arg, ce);
+          assert(success && "FIXME: Unhandled solver failure");
+          (void) success;
+
+      } else {
+          bool success = solver->getValue(state, *ai, ce);
+          assert(success && "FIXME: Unhandled solver failure");
+          (void) success;
+      }
+
       ce->toMemory(&args[wordIndex]);
       ObjectPair op;
       // Checking to see if the argument is a pointer to something
