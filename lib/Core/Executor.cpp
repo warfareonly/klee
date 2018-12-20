@@ -102,6 +102,8 @@ namespace {
   DumpStatesOnHalt("dump-states-on-halt",
                    cl::init(true),
 		   cl::desc("Dump test cases for all active states on exit (default=on)"));
+
+  int *A_data, *A_data_stat;
   
   /// The different query logging solvers that can switched on/off
   enum PrintDebugInstructionsType {
@@ -3111,6 +3113,105 @@ static const char *okExternalsList[] = { "printf",
 static std::set<std::string> okExternals(okExternalsList,
                                          okExternalsList + 
                                          (sizeof(okExternalsList)/sizeof(okExternalsList[0])));
+
+
+void Executor::transformExpr(ref<Expr> &parent, ref<Expr> &expr){
+//    errs() << "\ntransforming: " << parent << "\n";
+    ConstantExpr *index_expr = dyn_cast<ConstantExpr>(expr->getKid(0));
+    std::string str_index;
+    index_expr->toString(str_index);
+    int index = stoi(str_index);
+    int width = expr->getWidth();
+//    errs() << "index = " << index << '\n';
+//    errs() << "width = " << width << '\n';
+    const ReadExpr *base = dyn_cast<ReadExpr>(expr);
+    std::string name_src = base->updates.root->name;
+    ref<ConstantExpr> resolve;
+    if (name_src == "A-data"){
+//        errs() << "\n\nDATA COLLECTED\n\n";
+        int value = A_data[index];
+        resolve = ConstantExpr::create(value, width);
+    } else if (name_src == "A-data-stat"){
+//        errs() << "\n\nSTAT COLLECTED\n\n";
+        int value = A_data_stat[index];
+        resolve = ConstantExpr::create(value, width);
+    }
+
+//    return resolve;
+//    errs() << "src = " << name_src << '\n';
+//    errs() << "resolved : " << resolve << "\n";
+
+    if (parent->getKind() == Expr::SExt || parent->getKind() == Expr::ZExt){
+//        errs() << "parent.kind = " << parent->getKind() << '\n';
+        ref<CastExpr> se = dyn_cast<CastExpr>(parent);
+        se->src = resolve;
+    }
+
+//    errs() << "\ntransformed: " << parent << "\n";
+}
+
+
+ref<Expr> Executor::cloneTree(ref<Expr> &tree){
+//    errs() << "\ncloning: " << tree << "\n";
+    ref<Expr> clone;
+    int numKids = tree->getNumKids();
+    ref<Expr> clone_kids[numKids];
+
+    if (dyn_cast<ConstantExpr>(tree)) {
+        return tree;
+    }
+
+    if (dyn_cast<ReadExpr>(tree)) {
+        ref<ConstantExpr> child = dyn_cast<ConstantExpr>(tree->getKid(0));
+//        errs() << "child.kind " << child->getKind() << "\n";
+        ref<Expr> clone_child = ConstantExpr::create(child->getZExtValue(), child->getWidth());
+        clone_kids[0] = clone_child;
+        clone = tree->rebuild(clone_kids);
+
+
+    } else {
+
+        if (numKids == 0) {
+            clone = tree->rebuild(clone_kids);
+        } else {
+            for (int l = 0; l < numKids; l++) {
+                ref<Expr> child = tree->getKid(l);
+                ref<Expr> clone_child = cloneTree(child);
+                clone_kids[l] = clone_child;
+            }
+            clone = tree->rebuild(clone_kids);
+        }
+    }
+//    errs() << "partial clone " << clone << "\n";
+    return clone;
+}
+
+void Executor::traverseTree(ref<Expr> &parent, ref<Expr> &current){
+
+//    errs() << "\ntraversing: " << current << "\n";
+    if (current->getKind() == Expr::Read) {
+        transformExpr(parent, current);
+    } else {
+
+        int numKids = current.get()->getNumKids();
+//        errs() << "num-kids: " << numKids << "\n";
+        if (numKids > 0){
+            for (int l=0; l<numKids; l++) {
+                ref<Expr> child = current->getKid(l);
+                traverseTree(current, child);
+            }
+        } else {
+//            errs() << "expr = " << current << "\n";
+
+        }
+    }
+
+
+
+    return;
+}
+
+
 
 void Executor::callExternalFunction(ExecutionState &state,
                                     KInstruction *target,

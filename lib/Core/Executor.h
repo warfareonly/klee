@@ -407,7 +407,9 @@ private:
   /// Bind a constant value for e to the given target. NOTE: This
   /// function may fork state if the state has multiple seeds.
   void executeGetValue(ExecutionState &state, ref<Expr> e, KInstruction *target);
-
+  void  transformExpr(ref<Expr> &parent, ref<Expr> &expr);
+  ref<Expr> cloneTree(ref<Expr> &tree);
+  void traverseTree(ref<Expr> &parent, ref<Expr> &expr);
   /// Get textual information regarding a memory address.
   std::string getAddressInfo(ExecutionState &state, ref<Expr> address) const;
 
