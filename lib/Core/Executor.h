@@ -410,6 +410,10 @@ private:
   void  transformExpr(ref<Expr> &parent, ref<Expr> &expr);
   ref<Expr> cloneTree(ref<Expr> &tree);
   void traverseTree(ref<Expr> &parent, ref<Expr> &expr);
+  void iterateUpdateList(ref<Expr> &expr);
+
+
+
   /// Get textual information regarding a memory address.
   std::string getAddressInfo(ExecutionState &state, ref<Expr> address) const;
 

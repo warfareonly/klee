@@ -1109,9 +1109,31 @@ Executor::toConstant(ExecutionState &state,
     return CE;
 
   ref<ConstantExpr> value;
-  bool success = solver->getValue(state, e, value);
-  assert(success && "FIXME: Unhandled solver failure");
-  (void) success;
+
+
+    if (usingSeeds) {
+//        errs() << "e= " << e << "\n";
+//        errs() << "e.type= " << e->getKind() << "\n";
+        ref<Expr> arg = cloneTree(e);
+//        errs() << "arg.type= " << arg->getKind() << "\n";
+//          errs() << "arg= " << arg << "\n";
+        int numKids = arg.get()->getNumKids();
+//        errs() << "num-kids=" << numKids << "\n";
+        for (int l = 0; l < numKids; l++) {
+            traverseTree(arg, arg);
+        }
+//        errs() << "transformed-arg= " << arg << "\n";
+        bool success = solver->getValue(state, arg, value);
+        assert(success && "FIXME: Unhandled solver failure");
+        (void) success;
+
+    } else {
+        bool success = solver->getValue(state, e, value);
+        assert(success && "FIXME: Unhandled solver failure");
+        (void) success;
+    }
+
+
 
   std::string str;
   llvm::raw_string_ostream os(str);
@@ -3138,7 +3160,8 @@ static std::set<std::string> okExternals(okExternalsList,
 
 
 void Executor::transformExpr(ref<Expr> &parent, ref<Expr> &expr){
-//    errs() << "\ntransforming: " << parent << "\n";
+//    errs() << "\ntransforming: " << expr << "\n";
+//    errs() << "\nparent: " << parent << "\n";
     ConstantExpr *index_expr = dyn_cast<ConstantExpr>(expr->getKid(0));
     std::string str_index;
     index_expr->toString(str_index);
@@ -3148,6 +3171,10 @@ void Executor::transformExpr(ref<Expr> &parent, ref<Expr> &expr){
 //    errs() << "width = " << width << '\n';
     const ReadExpr *base = dyn_cast<ReadExpr>(expr);
     std::string name_src = base->updates.root->name;
+    int updateSize = base->updates.getSize();
+//    if (updateSize > 0)
+//        iterateUpdateList(expr);
+//    errs() << "update list.size: " << base->updates.getSize() << '\n';
     ref<ConstantExpr> resolve;
     if (name_src == "A-data"){
 //        errs() << "\n\nDATA COLLECTED\n\n";
@@ -3164,12 +3191,13 @@ void Executor::transformExpr(ref<Expr> &parent, ref<Expr> &expr){
 //    errs() << "resolved : " << resolve << "\n";
 
     if (parent->getKind() == Expr::SExt || parent->getKind() == Expr::ZExt){
-//        errs() << "parent.kind = " << parent->getKind() << '\n';
+
         ref<CastExpr> se = dyn_cast<CastExpr>(parent);
         se->src = resolve;
     }
-
-//    errs() << "\ntransformed: " << parent << "\n";
+//    errs() << "\nparent: " << parent << "\n";
+//    errs() << "parent.kind = " << parent->getKind() << '\n';
+//    errs() << "\ntransformed: " << resolve << "\n";
 }
 
 
@@ -3178,18 +3206,25 @@ ref<Expr> Executor::cloneTree(ref<Expr> &tree){
     ref<Expr> clone;
     int numKids = tree->getNumKids();
     ref<Expr> clone_kids[numKids];
-
+//    errs() << "\n num kids: " << numKids << "\n";
+//    errs() << "\n type: " << tree->getKind() << "\n";
     if (dyn_cast<ConstantExpr>(tree)) {
         return tree;
     }
 
     if (dyn_cast<ReadExpr>(tree)) {
-        ref<ConstantExpr> child = dyn_cast<ConstantExpr>(tree->getKid(0));
-//        errs() << "child.kind " << child->getKind() << "\n";
-        ref<Expr> clone_child = ConstantExpr::create(child->getZExtValue(), child->getWidth());
+        ref<Expr> clone_child;
+        ref<Expr> child = tree->getKid(0);
+        if (child->getKind() == Expr::Constant) {
+            ref<ConstantExpr> child = dyn_cast<ConstantExpr>(tree->getKid(0));
+//            errs() << "child.kind " << child->getKind() << "\n";
+            clone_child = ConstantExpr::create(child->getZExtValue(), child->getWidth());
+
+        } else {
+            clone_child = cloneTree(child);
+        }
         clone_kids[0] = clone_child;
         clone = tree->rebuild(clone_kids);
-
 
     } else {
 
@@ -3197,7 +3232,10 @@ ref<Expr> Executor::cloneTree(ref<Expr> &tree){
             clone = tree->rebuild(clone_kids);
         } else {
             for (int l = 0; l < numKids; l++) {
+//                errs() << "child-" << l << "\n";
                 ref<Expr> child = tree->getKid(l);
+//                errs() << child << "\n";
+//                errs() << "child.kind:" << child->getKind() << "\n";
                 ref<Expr> clone_child = cloneTree(child);
                 clone_kids[l] = clone_child;
             }
@@ -3208,18 +3246,86 @@ ref<Expr> Executor::cloneTree(ref<Expr> &tree){
     return clone;
 }
 
+
+void Executor::iterateUpdateList(ref<Expr> &expr){
+//    errs() << "\niterating update list in : " << expr << "\n";
+    if (dyn_cast<ReadExpr>(expr)){
+        ref<ReadExpr> readExpr = dyn_cast<ReadExpr>(expr);
+        UpdateList updates = readExpr->updates;
+        const UpdateNode *head = updates.head;
+
+        // Special case empty list.
+        if (head) {
+            for (const UpdateNode *un = head; un; un = un->next) {
+//                errs() << "un.index = " << un->index << "\n";
+//                errs() << "un.index.type = " << un->index->getKind() << "\n";
+//                errs() << "un.value = " << un->value << "\n";
+//                errs() << "un.value.type = " << un->value->getKind() << "\n";
+                ref<Expr> e(un->value);
+                traverseTree(e,e);
+//                un->value = e;
+
+//                errs() << "trans.un.value = " << un->value << "\n";
+//                errs() << "trans.un.value.type = " << un->value->getKind() << "\n";
+
+                // We are done if we hit the cache.
+//                std::map<const UpdateNode *, unsigned>::iterator it =
+//                        updateBindings.find(un);
+//                if (it != updateBindings.end()) {
+//                    if (openedList)
+//                        PC << "] @ ";
+//                    PC << "U" << it->second;
+//                    return;
+//                } else if (!hasScan || shouldPrintUpdates.count(un)) {
+//                    if (openedList)
+//                        PC << "] @";
+//                    if (un != head)
+//                        PC.breakLine(outerIndent);
+//                    PC << "U" << updateCounter << ":";
+//                    updateBindings.insert(std::make_pair(un, updateCounter++));
+//                    openedList = nextShouldBreak = false;
+//                }
+
+
+                //PC << "(=";
+                //unsigned innerIndent = PC.pos;
+//                print(un->index, PC);
+                //printSeparator(PC, isSimple(un->index), innerIndent);
+//                PC << "=";
+//                print(un->value, PC);
+                //PC << ')';
+
+            }
+
+        }
+    }
+
+
+}
+
 void Executor::traverseTree(ref<Expr> &parent, ref<Expr> &current){
 
 //    errs() << "\ntraversing: " << current << "\n";
     if (current->getKind() == Expr::Read) {
-        transformExpr(parent, current);
+        ref<Expr> clone_child;
+        ref<Expr> child = current->getKid(0);
+        if (child->getKind() == Expr::Constant) {
+            transformExpr(parent, current);
+
+        } else {
+            traverseTree(current, child);
+        }
+
+
     } else {
 
         int numKids = current.get()->getNumKids();
 //        errs() << "num-kids: " << numKids << "\n";
         if (numKids > 0){
             for (int l=0; l<numKids; l++) {
+
                 ref<Expr> child = current->getKid(l);
+//                errs() << "child - " << l << " : " << child << "\n";
                 traverseTree(current, child);
             }
         } else {
@@ -3521,8 +3627,16 @@ void Executor::executeAlloc(ExecutionState &state,
           ExprPPrinter::printOne(info, "  size expr", size);
           info << "  concretization : " << example << "\n";
           info << "  unbound example: " << tmp << "\n";
-          terminateStateOnError(*hugeSize.second, "concretized symbolic size",
-                                Model, NULL, info.str());
+            errs() << "example = " << example << " |  tmp = " << tmp << "\n";
+            errs() << "first = " << fixedSize.first << " | second = " << fixedSize.second << "\n";
+            errs() << "first = " << hugeSize.first << " | second = " << hugeSize.second << "\n";
+//          terminateStateOnError(*hugeSize.second, "concretized symbolic size",
+//                                Model, NULL, info.str());
+            klee_message("NOTE: found huge malloc");
+            bindLocal(target, *hugeSize.second,
+                      ConstantExpr::alloc(0, Context::get().getPointerWidth()));
+            executeAlloc(*hugeSize.second, example, isLocal,
+                         target, zeroMemory, reallocFrom);
         }
       }
     }
