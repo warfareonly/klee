@@ -3140,7 +3140,9 @@ static std::set<std::string> okExternals(okExternalsList,
 void Executor::transformExpr(ref<Expr> &parent, ref<Expr> &expr){
 //    errs() << "\ntransforming: " << parent << "\n";
     ConstantExpr *index_expr = dyn_cast<ConstantExpr>(expr->getKid(0));
+//    errs() << "\nexpression: " << expr->getKid(0) << "\n";
     std::string str_index;
+    bool modified = false;
     index_expr->toString(str_index);
     int index = stoi(str_index);
     int width = expr->getWidth();
@@ -3153,17 +3155,20 @@ void Executor::transformExpr(ref<Expr> &parent, ref<Expr> &expr){
 //        errs() << "\n\nDATA COLLECTED\n\n";
         int value = A_data[index];
         resolve = ConstantExpr::create(value, width);
+        modified = true;
     } else if (name_src == "A-data-stat"){
 //        errs() << "\n\nSTAT COLLECTED\n\n";
         int value = A_data_stat[index];
         resolve = ConstantExpr::create(value, width);
+        modified = true;
     }
+
 
 //    return resolve;
 //    errs() << "src = " << name_src << '\n';
-//    errs() << "resolved : " << resolve << "\n";
 
-    if (parent->getKind() == Expr::SExt || parent->getKind() == Expr::ZExt){
+
+    if (modified && (parent->getKind() == Expr::SExt || parent->getKind() == Expr::ZExt)){
 //        errs() << "parent.kind = " << parent->getKind() << '\n';
         ref<CastExpr> se = dyn_cast<CastExpr>(parent);
         se->src = resolve;
@@ -3220,7 +3225,7 @@ ref<Expr> Executor::cloneTree(ref<Expr> &tree){
 void Executor::traverseTree(ref<Expr> &parent, ref<Expr> &current){
 
 //    errs() << "\ntraversing: " << current << "\n";
-    if (current->getKind() == Expr::Read) {
+    if (current->getKind() == Expr::Read && current->getKid(0)->getKind() == Expr::Constant) {
         transformExpr(parent, current);
     } else {
 
