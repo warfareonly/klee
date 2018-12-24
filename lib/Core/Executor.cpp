@@ -3194,14 +3194,11 @@ void Executor::transformExpr(ref<Expr> &parent, ref<Expr> &expr){
 //    return resolve;
 //    errs() << "src = " << name_src << '\n';
 
-<<<<<<< HEAD
+
 
     if (modified && (parent->getKind() == Expr::SExt || parent->getKind() == Expr::ZExt)){
 //        errs() << "parent.kind = " << parent->getKind() << '\n';
-=======
-    if (parent->getKind() == Expr::SExt || parent->getKind() == Expr::ZExt){
 
->>>>>>> aa6aff5bba5528c346515a7d66612a15db3b0a35
         ref<CastExpr> se = dyn_cast<CastExpr>(parent);
         se->src = resolve;
     }
@@ -3223,7 +3220,7 @@ ref<Expr> Executor::cloneTree(ref<Expr> &tree){
     }
 
     if (dyn_cast<ReadExpr>(tree)) {
-<<<<<<< HEAD
+
         if (dyn_cast<ConstantExpr>(tree->getKid(0))) {
             ref<ConstantExpr> child = dyn_cast<ConstantExpr>(tree->getKid(0));
 //            errs() << "child = " << child << "\n";
@@ -3240,21 +3237,8 @@ ref<Expr> Executor::cloneTree(ref<Expr> &tree){
             clone = tree->rebuild(clone_kids);
         }
 
-=======
-        ref<Expr> clone_child;
-        ref<Expr> child = tree->getKid(0);
-        if (child->getKind() == Expr::Constant) {
-            ref<ConstantExpr> child = dyn_cast<ConstantExpr>(tree->getKid(0));
-//            errs() << "child.kind " << child->getKind() << "\n";
-            clone_child = ConstantExpr::create(child->getZExtValue(), child->getWidth());
 
-        } else {
-            clone_child = cloneTree(child);
-        }
-        clone_kids[0] = clone_child;
-        clone = tree->rebuild(clone_kids);
 
->>>>>>> aa6aff5bba5528c346515a7d66612a15db3b0a35
     } else {
 
         if (numKids == 0) {
@@ -3335,10 +3319,7 @@ void Executor::iterateUpdateList(ref<Expr> &expr){
 void Executor::traverseTree(ref<Expr> &parent, ref<Expr> &current){
 
 //    errs() << "\ntraversing: " << current << "\n";
-<<<<<<< HEAD
-    if (current->getKind() == Expr::Read && current->getKid(0)->getKind() == Expr::Constant) {
-        transformExpr(parent, current);
-=======
+
     if (current->getKind() == Expr::Read) {
         ref<Expr> clone_child;
         ref<Expr> child = current->getKid(0);
@@ -3349,8 +3330,6 @@ void Executor::traverseTree(ref<Expr> &parent, ref<Expr> &current){
             traverseTree(current, child);
         }
 
-
->>>>>>> aa6aff5bba5528c346515a7d66612a15db3b0a35
     } else {
 
         int numKids = current.get()->getNumKids();
