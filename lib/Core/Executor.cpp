@@ -3184,12 +3184,21 @@ ref<Expr> Executor::cloneTree(ref<Expr> &tree){
     }
 
     if (dyn_cast<ReadExpr>(tree)) {
-        ref<ConstantExpr> child = dyn_cast<ConstantExpr>(tree->getKid(0));
-//        errs() << "child.kind " << child->getKind() << "\n";
-        ref<Expr> clone_child = ConstantExpr::create(child->getZExtValue(), child->getWidth());
-        clone_kids[0] = clone_child;
-        clone = tree->rebuild(clone_kids);
+        if (dyn_cast<ConstantExpr>(tree->getKid(0))) {
+            ref<ConstantExpr> child = dyn_cast<ConstantExpr>(tree->getKid(0));
+//            errs() << "child = " << child << "\n";
+//            errs() << "child.kind " << child->getKind() << "\n";
+            ref<Expr> clone_child = ConstantExpr::create(child->getZExtValue(), child->getWidth());
+            clone_kids[0] = clone_child;
+            clone = tree->rebuild(clone_kids);
 
+        } else {
+            ref<Expr> child = tree->getKid(0);
+            ref<Expr> clone_child = cloneTree(child);
+//            errs() << "cloned child = " << clone_child << "\n";
+            clone_kids[0] = clone_child;
+            clone = tree->rebuild(clone_kids);
+        }
 
     } else {
 
@@ -3239,6 +3248,7 @@ void Executor::callExternalFunction(ExecutionState &state,
                                     KInstruction *target,
                                     Function *function,
                                     std::vector< ref<Expr> > &arguments) {
+//  errs() << "\n\n external function called: " << function << "\n";
   // check if specialFunctionHandler wants it
   if (specialFunctionHandler->handle(state, function, target, arguments))
     return;
@@ -3260,6 +3270,7 @@ void Executor::callExternalFunction(ExecutionState &state,
   unsigned wordIndex = 2;
   for (std::vector<ref<Expr> >::iterator ai = arguments.begin(), 
        ae = arguments.end(); ai!=ae; ++ai) {
+//      errs() << "\n\narg = " << *ai << "\n";
     if (ExternalCalls == ExternalCallPolicy::All) { // don't bother checking uniqueness
       *ai = optimizer.optimizeExpr(*ai, true);
       ref<ConstantExpr> ce;
@@ -3281,7 +3292,7 @@ void Executor::callExternalFunction(ExecutionState &state,
           assert(success && "FIXME: Unhandled solver failure");
           (void) success;
       }
-
+//        errs() << "\n\nce = " << *ce << "\n";
       ce->toMemory(&args[wordIndex]);
       ObjectPair op;
       // Checking to see if the argument is a pointer to something
@@ -3521,8 +3532,10 @@ void Executor::executeAlloc(ExecutionState &state,
           ExprPPrinter::printOne(info, "  size expr", size);
           info << "  concretization : " << example << "\n";
           info << "  unbound example: " << tmp << "\n";
-          terminateStateOnError(*hugeSize.second, "concretized symbolic size",
-                                Model, NULL, info.str());
+//          terminateStateOnError(*hugeSize.second, "concretized symbolic size",
+//
+            bindLocal(target, *hugeSize.second,
+                      ConstantExpr::alloc(0, Context::get().getPointerWidth()));
         }
       }
     }
