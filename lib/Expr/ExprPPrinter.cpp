@@ -279,7 +279,7 @@ private:
   void printRead(const ReadExpr *re, PrintContext &PC, unsigned indent) {
     print(re->index, PC);
     printSeparator(PC, isVerySimple(re->index), indent);
-    printUpdateList(re->updates, PC);
+//    printUpdateList(re->updates, PC);
   }
 
   void printExtract(const ExtractExpr *ee, PrintContext &PC, unsigned indent) {
