@@ -1023,25 +1023,27 @@ void Executor::addConstraint(ExecutionState &state, ref<Expr> condition) {
   // Check to see if this constraint violates seeds.
   std::map< ExecutionState*, std::vector<SeedInfo> >::iterator it = 
     seedMap.find(&state);
+  bool res;
   if (it != seedMap.end()) {
     bool warn = false;
     for (std::vector<SeedInfo>::iterator siit = it->second.begin(), 
            siie = it->second.end(); siit != siie; ++siit) {
-      bool res;
+
       bool success = 
         solver->mustBeFalse(state, siit->assignment.evaluate(condition), res);
       assert(success && "FIXME: Unhandled solver failure");
       (void) success;
       if (res) {
-        siit->patchSeed(state, condition, solver);
+//        siit->patchSeed(state, condition, solver);
         warn = true;
+        errs() << "violating expr: " << condition << "\n";
       }
     }
     if (warn)
       klee_warning("seeds patched for violating constraint"); 
   }
-
-  state.addConstraint(condition);
+  if (!res)
+    state.addConstraint(condition);
   if (ivcEnabled)
     doImpliedValueConcretization(state, condition, 
                                  ConstantExpr::alloc(1, Expr::Bool));
@@ -3160,31 +3162,33 @@ static std::set<std::string> okExternals(okExternalsList,
 
 
 ref<Expr> Executor::concretizeReadExpr(ExecutionState &state, ref<Expr> &expr){
-    errs() << "\nconcretizing read expr: " << expr << "\n";
-//    errs() << "\nparent: " << parent << "\n";
+
+    const ReadExpr *base = dyn_cast<ReadExpr>(expr);
+//    errs() << "\nconcretizing read expr: " << expr << "\n";
     ref<Expr> child = expr->getKid(0);
+    ref<Expr> index_expr;
     std::string str_index;
     bool modified = false;
 
     /* concretizing index */
     if(dyn_cast<ConstantExpr>(child)){
-        ConstantExpr *index_expr = dyn_cast<ConstantExpr>(child);
-//        errs() << "\nexpression: " << expr->getKid(0) << "\n";
-        index_expr->toString(str_index);
+//        ConstantExpr *index_expr = dyn_cast<ConstantExpr>(child);
+//        index_expr->toString(str_index);
+        index_expr = child;
+        ref<ConstantExpr> index_expr_const = dyn_cast<ConstantExpr> (child);
+        index_expr_const->toString(str_index);
+
     } else {
-        ref<ConstantExpr> index_expr;
-        bool success = solver->getValue(state, child, index_expr);
-        assert(success && "FIXME: Unhandled solver failure");
-        (void) success;
-        index_expr->toString(str_index);
+        index_expr = concretizeExpr(state,child);
+        ref<ConstantExpr> index_expr_const = dyn_cast<ConstantExpr> (index_expr);
+        index_expr_const->toString(str_index);
     }
 
     int index = stoi(str_index);
     int width = expr->getWidth();
-//    errs() << "index = " << index << '\n';
-//    errs() << "width = " << width << '\n';
-    const ReadExpr *base = dyn_cast<ReadExpr>(expr);
+
     std::string name_src = base->updates.root->name;
+//    errs() << "name-src = " << name_src << "\n";
     int updateSize = base->updates.getSize();
 //    if (updateSize > 0)
 //        iterateUpdateList(expr);
@@ -3200,18 +3204,27 @@ ref<Expr> Executor::concretizeReadExpr(ExecutionState &state, ref<Expr> &expr){
         int value = A_data_stat[index];
         resolve = ConstantExpr::create(value, width);
         modified = true;
+    } else {
+        ref<Expr> ce;
+        ce = ReadExpr::create(base->updates, index_expr);
+        bool success = solver->getValue(state, ce, resolve);
+        assert(success && "FIXME: Unhandled solver failure");
+        (void) success;
+        modified = true;
     }
 
     if (modified) {
-        errs() << "concretized read expr: " << resolve << "\n";
+//        errs() << "concretized read expr: " << resolve << "\n";
         return resolve;
     }
 
+    errs() << "not concretized read expr: " << expr << "\n";
     return expr;
+
 }
 
 ref<Expr> Executor::concretizeExpr(klee::ExecutionState &state, klee::ref<klee::Expr> &expr) {
-    errs() << "\nconcretizing-expr: " << expr << "\n";
+//    errs() << "\nconcretizing-expr: " << expr << "\n";
     int numKids = expr.get()->getNumKids();
     ref<ConstantExpr> resolve;
 
@@ -3227,6 +3240,28 @@ ref<Expr> Executor::concretizeExpr(klee::ExecutionState &state, klee::ref<klee::
                 } else {
                     list_child[l] = concretizeExpr(state,child);
                 }
+//            } else if(child->getKind() == Expr::Concat) {
+//                errs() << "child-conccat = " << child << "\n";
+//                    const ReadExpr *base = hasOrderedReads(child, -1);
+//                    const bool isLSB = (base != nullptr);
+//                    if (!isLSB)
+//                        base = hasOrderedReads(child, 1);
+//                    if (base) {
+//                        concretized_child = concretizeExpr(state,child);
+//                        errs() << "concretized-child: " << concretized_child  << "\n";
+//                        errs() << "base = " << *base << "\n";
+//                        ref<Expr> converted =  ReadExpr::create(base->updates, base->index);
+//                        concretized_child =  concretizeExpr(state,converted);
+//                        errs() << "concretize-base: " << concretized_child << "\n";
+//                        list_child[l] = concretizeExpr(state,converted);
+//                    } else {
+//                        list_child[l] = concretizeExpr(state,child);
+//                    }
+//
+//
+////                list_child[l] = concretizeExpr(state,base);
+//
+
             } else {
                 list_child[l] = concretizeExpr(state,child);
             }
@@ -3239,7 +3274,7 @@ ref<Expr> Executor::concretizeExpr(klee::ExecutionState &state, klee::ref<klee::
     assert(success && "FIXME: Unhandled solver failure");
     (void) success;
 
-    errs() << "\nconcretized-expr: " << resolve << "\n";
+//    errs() << "\nconcretized-expr: " << resolve << "\n";
     return resolve;
 }
 
@@ -3461,7 +3496,7 @@ void Executor::callExternalFunction(ExecutionState &state,
   unsigned wordIndex = 2;
   for (std::vector<ref<Expr> >::iterator ai = arguments.begin(), 
        ae = arguments.end(); ai!=ae; ++ai) {
-      errs() << "\n\narg = " << *ai << "\n";
+//      errs() << "\n\narg = " << *ai << "\n";
     if (ExternalCalls == ExternalCallPolicy::All) { // don't bother checking uniqueness
       *ai = optimizer.optimizeExpr(*ai, true);
       ref<ConstantExpr> ce;
@@ -3473,7 +3508,7 @@ void Executor::callExternalFunction(ExecutionState &state,
           for (int l = 0; l < numKids; l++) {
               concretizeExpr(state, arg);
           }
-          errs() << "arg-traversed= " << arg << "\n";
+//          errs() << "arg-concretized= " << arg << "\n";
           bool success = solver->getValue(state, arg, ce);
           assert(success && "FIXME: Unhandled solver failure");
           (void) success;
@@ -3483,7 +3518,7 @@ void Executor::callExternalFunction(ExecutionState &state,
           assert(success && "FIXME: Unhandled solver failure");
           (void) success;
       }
-        errs() << "\n\nce = " << *ce << "\n";
+//        errs() << "\n\nce = " << *ce << "\n";
       ce->toMemory(&args[wordIndex]);
       ObjectPair op;
       // Checking to see if the argument is a pointer to something
@@ -3629,6 +3664,9 @@ void Executor::executeAlloc(ExecutionState &state,
                             bool zeroMemory,
                             const ObjectState *reallocFrom) {
   size = toUnique(state, size);
+//  errs() << "size = " << size << "\n";
+  size = concretizeExpr(state, size);
+//  errs() << "size = " << size << "\n";
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(size)) {
     const llvm::Value *allocSite = state.prevPC->inst;
     size_t allocationAlignment = getAllocationAlignment(allocSite);
@@ -3730,8 +3768,8 @@ void Executor::executeAlloc(ExecutionState &state,
 //          terminateStateOnError(*hugeSize.second, "concretized symbolic size",
 //                                Model, NULL, info.str());
             klee_message("NOTE: found huge malloc");
-            bindLocal(target, *hugeSize.second,
-                      ConstantExpr::alloc(0, Context::get().getPointerWidth()));
+//            bindLocal(target, *hugeSize.second,
+//                      ConstantExpr::alloc(0, Context::get().getPointerWidth()));
             executeAlloc(*hugeSize.second, example, isLocal,
                          target, zeroMemory, reallocFrom);
 
@@ -3814,7 +3852,7 @@ void Executor::executeMemoryOperation(ExecutionState &state,
   Expr::Width type = (isWrite ? value->getWidth() : 
                      getWidthForLLVMType(target->inst->getType()));
   unsigned bytes = Expr::getMinBytesForWidth(type);
-
+//  errs() << "bytes = " << bytes << "\n";
   if (SimplifySymIndices) {
     if (!isa<ConstantExpr>(address))
       address = state.constraints.simplifyExpr(address);
@@ -3823,17 +3861,18 @@ void Executor::executeMemoryOperation(ExecutionState &state,
   }
 
   address = optimizer.optimizeExpr(address, true);
-
+//  errs() << "address = " << address << "\n";
   // fast path: single in-bounds resolution
   ObjectPair op;
   bool success;
   solver->setTimeout(coreSolverTimeout);
   if (!state.addressSpace.resolveOne(state, solver, address, op, success)) {
+//      errs() << "first if address = " << address << "\n";
     address = toConstant(state, address, "resolveOne failure");
     success = state.addressSpace.resolveOne(cast<ConstantExpr>(address), op);
   }
   solver->setTimeout(time::Span());
-
+//  errs() << "address = " << address << "\n";
   if (success) {
     const MemoryObject *mo = op.first;
 
@@ -3876,8 +3915,9 @@ void Executor::executeMemoryOperation(ExecutionState &state,
 
       return;
     }
-  } 
+  }
 
+//  errs() << "ERROR address = " << address << "\n";
   // we are on an error path (no resolution, multiple resolution, one
   // resolution with out of bounds)
 
