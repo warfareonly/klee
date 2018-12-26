@@ -1120,7 +1120,7 @@ Executor::toConstant(ExecutionState &state,
         int numKids = arg.get()->getNumKids();
 //        errs() << "num-kids=" << numKids << "\n";
         for (int l = 0; l < numKids; l++) {
-            traverseTree(state, arg, arg);
+            arg = concretizeExpr(state, arg);
         }
 //        errs() << "transformed-arg= " << arg << "\n";
         bool success = solver->getValue(state, arg, value);
@@ -3159,9 +3159,9 @@ static std::set<std::string> okExternals(okExternalsList,
                                          (sizeof(okExternalsList)/sizeof(okExternalsList[0])));
 
 
-void Executor::concretizeReadExpr(ExecutionState &state, ref<Expr> &parent, ref<Expr> &expr){
-    errs() << "\nconcretizing: " << expr << "\n";
-    errs() << "\nparent: " << parent << "\n";
+ref<Expr> Executor::concretizeReadExpr(ExecutionState &state, ref<Expr> &expr){
+    errs() << "\nconcretizing read expr: " << expr << "\n";
+//    errs() << "\nparent: " << parent << "\n";
     ref<Expr> child = expr->getKid(0);
     std::string str_index;
     bool modified = false;
@@ -3202,122 +3202,45 @@ void Executor::concretizeReadExpr(ExecutionState &state, ref<Expr> &parent, ref<
         modified = true;
     }
 
-//    errs() << "src = " << name_src << '\n';
-
     if (modified) {
-//        errs() << "resolve = " << resolve << "\n";
-        if (parent->getKind() == Expr::SExt || parent->getKind() == Expr::ZExt) {
-//            errs() << "parent.kind = " << parent->getKind() << '\n';
-            ref<CastExpr> se = dyn_cast<CastExpr>(parent);
-            se->src = resolve;
-//            errs() << "\ntransformed: " << resolve << "\n";
-        } else if (parent->getKind() == Expr::Concat){
-            ref<Expr> kids[2];
-            ref<ConcatExpr> se = dyn_cast<ConcatExpr>(parent);
-//            errs() << "parent.kind = " << parent->getKind() << '\n';
-//            errs() << "left = " << parent->getKid(0) << "\n";
-//            errs() << "right = " << parent->getKid(1) << "\n";
-            if (parent->getKid(0)->getKind() == Expr::Constant){
-                // 0 is left
-                kids[1] = resolve;
-                kids[0] = se->getLeft();
-            } else {
-                // 1 is right
-                kids[0] = resolve;
-                kids[1] = se->getRight();
-            }
-            parent = se->rebuild(kids);
-//            errs() << "kids[0] = " << kids[0] << "\n";
-//            errs() << "kids[1] = " << kids[1] << "\n";
-        }
+        errs() << "concretized read expr: " << resolve << "\n";
+        return resolve;
     }
 
-    errs() << "\nconcretized parent: " << parent << "\n";
-
+    return expr;
 }
 
-void Executor::transformExpr(klee::ExecutionState &state, klee::ref<klee::Expr> &parent, klee::ref<klee::Expr> &expr) {
-    errs() << "\ntransforming: " << expr << "\n";
-    errs() << "\nparent: " << parent << "\n";
-    ref<Expr> child = expr->getKid(0);
-    std::string str_index;
-    bool modified = false;
-
-    /* concretizing index */
-    if(dyn_cast<ConstantExpr>(child)){
-        ConstantExpr *index_expr = dyn_cast<ConstantExpr>(child);
-//        errs() << "\nexpression: " << expr->getKid(0) << "\n";
-        index_expr->toString(str_index);
-    } else {
-        ref<ConstantExpr> index_expr;
-        bool success = solver->getValue(state, child, index_expr);
-        assert(success && "FIXME: Unhandled solver failure");
-        (void) success;
-        index_expr->toString(str_index);
-    }
-
-    int index = stoi(str_index);
-    int width = expr->getWidth();
-//    errs() << "index = " << index << '\n';
-//    errs() << "width = " << width << '\n';
-    const ReadExpr *base = dyn_cast<ReadExpr>(expr);
-    std::string name_src = base->updates.root->name;
-    int updateSize = base->updates.getSize();
-//    if (updateSize > 0)
-//        iterateUpdateList(expr);
-//    errs() << "update list.size: " << base->updates.getSize() << '\n';
+ref<Expr> Executor::concretizeExpr(klee::ExecutionState &state, klee::ref<klee::Expr> &expr) {
+    errs() << "\nconcretizing-expr: " << expr << "\n";
+    int numKids = expr.get()->getNumKids();
     ref<ConstantExpr> resolve;
-    if (name_src == "A-data"){
 
-        int value = A_data[index];
-        errs() << "\n\nDATA COLLECTED: A[]: " << value<< "\n\n";
-        resolve = ConstantExpr::create(value, width);
-        modified = true;
-    } else if (name_src == "A-data-stat"){
-        errs() << "\n\nSTAT COLLECTED\n\n";
-        int value = A_data_stat[index];
-        resolve = ConstantExpr::create(value, width);
-        modified = true;
-    }
-
-
-//    return resolve;
-    errs() << "src = " << name_src << '\n';
-
-
-    if (modified) {
-        errs() << "resolve = " << resolve << "\n";
-        if (parent->getKind() == Expr::SExt || parent->getKind() == Expr::ZExt) {
-//        errs() << "parent.kind = " << parent->getKind() << '\n';
-
-            ref<CastExpr> se = dyn_cast<CastExpr>(parent);
-            se->src = resolve;
-//            errs() << "\ntransformed: " << resolve << "\n";
-        } else if (parent->getKind() == Expr::Concat){
-            ref<Expr> kids[2];
-            ref<ConcatExpr> se = dyn_cast<ConcatExpr>(parent);
-            errs() << "parent.kind = " << parent->getKind() << '\n';
-            errs() << "left = " << parent->getKid(0) << "\n";
-            errs() << "right = " << parent->getKid(1) << "\n";
-            if (parent->getKid(0)->getKind() == Expr::Constant){
-                // 0 is left
-                kids[1] = resolve;
-                kids[0] = se->getLeft();
+    if (numKids > 0){
+        ref<Expr> list_child[numKids];
+        for (int l=0; l<numKids; l++) {
+            ref<Expr> child = expr->getKid(l);
+            ref<Expr> concretized_child;
+            if (child->getKind() == Expr::Read) {
+                concretized_child = concretizeReadExpr(state, child);
+                if (concretized_child->getKind() == Expr::Constant){
+                    list_child[l] = concretized_child;
+                } else {
+                    list_child[l] = concretizeExpr(state,child);
+                }
             } else {
-                // 1 is right
-                kids[0] = resolve;
-                kids[1] = se->getRight();
+                list_child[l] = concretizeExpr(state,child);
             }
-            parent = se->rebuild(kids);
-            errs() << "kids[0] = " << kids[0] << "\n";
-            errs() << "kids[1] = " << kids[1] << "\n";
-//            errs() << "left = " << parent->getKid(0) << "\n";
-//            errs() << "right = " << parent->getKid(1) << "\n";
         }
-    }
-    errs() << "\nparent: " << parent << "\n";
-    errs() << "parent.kind = " << parent->getKind() << '\n';
 
+        expr = expr->rebuild(list_child);
+    }
+
+    bool success = solver->getValue(state, expr, resolve);
+    assert(success && "FIXME: Unhandled solver failure");
+    (void) success;
+
+    errs() << "\nconcretized-expr: " << resolve << "\n";
+    return resolve;
 }
 
 
@@ -3497,45 +3420,16 @@ void Executor::traverseTree(ExecutionState &state, ref<Expr> &parent, ref<Expr> 
     errs() << "\ntraversing: " << current << "\n";
     errs() << "\ntraversing.kind: " << current->getKind() << "\n";
     errs() << "num-kids: " << current.get()->getNumKids() << "\n";
-    if (current->getKind() == Expr::Read) {
-        ref<Expr> clone_child;
-        ref<Expr> child = current->getKid(0);
-        if (child->getKind() == Expr::Constant) {
-            concretizeReadExpr(state,parent, current);
-
-        } else {
-            traverseTree(state,current, child);
-            concretizeReadExpr(state,parent, current);
+    int numKids = current.get()->getNumKids();
+    if (numKids > 0){
+        for (int l=0; l<numKids; l++) {
+            ref<Expr> child = current->getKid(l);
+//            traverseTree(state, current, child);
         }
-
-    }  else {
-
-        int numKids = current.get()->getNumKids();
-
-        if (numKids > 0){
-            ref<Expr> kids[numKids];
-            for (int l=0; l<numKids; l++) {
-                ref<Expr> child = current->getKid(l);
-//                errs() << "child - " << l << " : " << child << "\n";
-                if (child->getKind() == Expr::Constant && current->getKind() == Expr::Concat)
-                    continue;
-                traverseTree(state, current, child);
-                errs() << "current = " << current << "\n";
-                errs() << "parent = " << parent << "\n";
-
-
-            }
-
-
-        } else {
-//            errs() << "expr = " << current << "\n";
-
-        }
-
     }
 
-    errs() << "\ntraversed[final]: " << parent << "\n";
-
+//    transformExpr(state,current);
+    errs() << "\ntraversed[final]: " << current << "\n";
     return;
 }
 
@@ -3577,7 +3471,7 @@ void Executor::callExternalFunction(ExecutionState &state,
 //          errs() << "arg= " << arg << "\n";
           int numKids = arg.get()->getNumKids();
           for (int l = 0; l < numKids; l++) {
-              traverseTree(state, arg, arg);
+              concretizeExpr(state, arg);
           }
           errs() << "arg-traversed= " << arg << "\n";
           bool success = solver->getValue(state, arg, ce);

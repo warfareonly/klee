@@ -407,9 +407,9 @@ private:
   /// Bind a constant value for e to the given target. NOTE: This
   /// function may fork state if the state has multiple seeds.
   void executeGetValue(ExecutionState &state, ref<Expr> e, KInstruction *target);
-  void  concretizeReadExpr(ExecutionState &state, ref<Expr> &parent, ref<Expr> &expr);
-  void  transformExpr(ExecutionState &state, ref<Expr> &parent, ref<Expr> &expr);
-  ref<Expr> cloneTree(ref<Expr> &tree);
+  ref<Expr> concretizeReadExpr(ExecutionState &state, ref<Expr> &expr);
+  ref<Expr> concretizeExpr(klee::ExecutionState &state, klee::ref<klee::Expr> &expr);
+    ref<Expr> cloneTree(ref<Expr> &tree);
   void traverseTree(ExecutionState &state, ref<Expr> &parent, ref<Expr> &expr);
   void iterateUpdateList(ref<Expr> &expr);
   const ReadExpr* hasOrderedReads(ref<Expr> e, int stride);
