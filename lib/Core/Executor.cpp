@@ -1161,6 +1161,7 @@ void Executor::executeGetValue(ExecutionState &state,
     seedMap.find(&state);
   if (it==seedMap.end() || isa<ConstantExpr>(e)) {
     ref<ConstantExpr> value;
+    e = concretizeExpr(state, e);
     e = optimizer.optimizeExpr(e, true);
     bool success = solver->getValue(state, e, value);
     assert(success && "FIXME: Unhandled solver failure");
@@ -1171,6 +1172,7 @@ void Executor::executeGetValue(ExecutionState &state,
     for (std::vector<SeedInfo>::iterator siit = it->second.begin(), 
            siie = it->second.end(); siit != siie; ++siit) {
       ref<Expr> cond = siit->assignment.evaluate(e);
+      cond = concretizeExpr(state, cond);
       cond = optimizer.optimizeExpr(cond, true);
       ref<ConstantExpr> value;
       bool success = solver->getValue(state, cond, value);
@@ -3196,7 +3198,7 @@ ref<Expr> Executor::concretizeReadExpr(ExecutionState &state, ref<Expr> &expr){
     ref<ConstantExpr> resolve;
     if (name_src == "A-data"){
         int value = A_data[index];
-//        errs() << "\n\nDATA COLLECTED: A[]: " << value<< "\n\n";
+//        errs() << "\n\nDATA COLLECTED: A[" << index << "]: " << value<< "\n\n";
         resolve = ConstantExpr::create(value, width);
         modified = true;
     } else if (name_src == "A-data-stat"){
@@ -3207,7 +3209,9 @@ ref<Expr> Executor::concretizeReadExpr(ExecutionState &state, ref<Expr> &expr){
     } else {
         ref<Expr> ce;
         ce = ReadExpr::create(base->updates, index_expr);
+
         bool success = solver->getValue(state, ce, resolve);
+//        errs() << "\n\nDATA COLLECTED: " << name_src << "[" << index_expr << "]: " << resolve<< "\n\n";
         assert(success && "FIXME: Unhandled solver failure");
         (void) success;
         modified = true;
@@ -3218,7 +3222,7 @@ ref<Expr> Executor::concretizeReadExpr(ExecutionState &state, ref<Expr> &expr){
         return resolve;
     }
 
-    errs() << "not concretized read expr: " << expr << "\n";
+//    errs() << "not concretized read expr: " << expr << "\n";
     return expr;
 
 }
@@ -3786,6 +3790,8 @@ void Executor::executeAlloc(ExecutionState &state,
 void Executor::executeFree(ExecutionState &state,
                            ref<Expr> address,
                            KInstruction *target) {
+//    errs() << "[execute free] address:" << address << "\n";
+  address = concretizeExpr(state, address);
   address = optimizer.optimizeExpr(address, true);
   StatePair zeroPointer = fork(state, Expr::createIsZero(address), true);
   if (zeroPointer.first) {
@@ -3818,7 +3824,8 @@ void Executor::resolveExact(ExecutionState &state,
                             ref<Expr> p,
                             ExactResolutionList &results, 
                             const std::string &name) {
-  p = optimizer.optimizeExpr(p, true);
+    errs() << "[resolveExact] p:" << p << "\n";
+    p = optimizer.optimizeExpr(p, true);
   // XXX we may want to be capping this?
   ResolutionList rl;
   state.addressSpace.resolve(state, solver, p, rl);
@@ -3852,7 +3859,10 @@ void Executor::executeMemoryOperation(ExecutionState &state,
   Expr::Width type = (isWrite ? value->getWidth() : 
                      getWidthForLLVMType(target->inst->getType()));
   unsigned bytes = Expr::getMinBytesForWidth(type);
-//  errs() << "bytes = " << bytes << "\n";
+  address = concretizeExpr(state, address);
+//  errs() << "[executeMemoryOperation] address = "  << address << "\n";
+
+
   if (SimplifySymIndices) {
     if (!isa<ConstantExpr>(address))
       address = state.constraints.simplifyExpr(address);
@@ -3861,7 +3871,7 @@ void Executor::executeMemoryOperation(ExecutionState &state,
   }
 
   address = optimizer.optimizeExpr(address, true);
-//  errs() << "address = " << address << "\n";
+
   // fast path: single in-bounds resolution
   ObjectPair op;
   bool success;
@@ -3882,6 +3892,8 @@ void Executor::executeMemoryOperation(ExecutionState &state,
     
     ref<Expr> offset = mo->getOffsetExpr(address);
     ref<Expr> check = mo->getBoundsCheckOffset(offset, bytes);
+//      errs() << "[executeMemoryOperation] check:" << check << "\n";
+    check = concretizeExpr(state, check);
     check = optimizer.optimizeExpr(check, true);
 
     bool inBounds;
