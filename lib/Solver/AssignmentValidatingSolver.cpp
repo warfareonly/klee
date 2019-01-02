@@ -52,6 +52,7 @@ bool AssignmentValidatingSolver::computeValue(const Query &query,
 bool AssignmentValidatingSolver::computeInitialValues(
     const Query &query, const std::vector<const Array *> &objects,
     std::vector<std::vector<unsigned char> > &values, bool &hasSolution) {
+//  llvm::errs() << "\n[AssignmentValidatinSolver]\n";
   bool success =
       solver->impl->computeInitialValues(query, objects, values, hasSolution);
   if (!hasSolution)

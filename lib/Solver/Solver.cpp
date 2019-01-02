@@ -86,6 +86,7 @@ bool Solver::getValue(const Query& query, ref<ConstantExpr> &result) {
 
   // FIXME: Push ConstantExpr requirement down.
   ref<Expr> tmp;
+//  llvm::errs() << "\n[Solver.cpp]\n";
   if (!impl->computeValue(query, tmp))
     return false;
   
