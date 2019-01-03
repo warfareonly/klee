@@ -404,8 +404,10 @@ void ExecutionState::dumpStack(llvm::raw_ostream &out,
                ie = stack.rend();
        it != ie; ++it) {
     std::string buf;
+    const StackFrame &sf = *it;
     llvm::raw_string_ostream frameStr(buf);
     dumpFrame(frameStr, *it, target, dataLayout, true);
+    dumpFrame(frameStr, sf, target, dataLayout, true);
     frameStr.flush();
     functionStateInfo->addStateInfo(it->kf->function, buf);
     target = it->caller;
@@ -428,7 +430,7 @@ void ExecutionState::dumpFrame(llvm::raw_ostream &out, const StackFrame &sf,
          it1 != ie1; ++it1) {
       const MemoryObject *mo = *it1;
       ObjectPair op;
-      ref<ConstantExpr> address =
+      ref <ConstantExpr> address =
               llvm::dyn_cast<ConstantExpr>(mo->getBaseExpr());
 
       if (!addressSpace.resolveOne(address, op))
@@ -443,7 +445,8 @@ void ExecutionState::dumpFrame(llvm::raw_ostream &out, const StackFrame &sf,
         continue;
 
       out << f->getName();
-      mo->allocSite->print(out);	       if (onStack)
+      mo->allocSite->print(out);
+      if (onStack)
         out << " (stack): ";
       else
         out << " (exited): ";
@@ -456,15 +459,116 @@ void ExecutionState::dumpFrame(llvm::raw_ostream &out, const StackFrame &sf,
       size_t spacePos;
       if ((spacePos = buf.find(" ", 3)) != std::string::npos) {
         std::string varName = buf.substr(3, spacePos - 3);
-        out << varName << ":";
+        out << varName << " (local):";
       } else {
-        out << "(unknown):";
+        out << "(unknown) (local):";
       }
       out << "\n";
 
       // Next we print more specific information based on the type of the
       // allocation
       dumpHandleType(out, "", os, ai->getAllocatedType(), dataLayout);
+    }
+
+    for (std::map<const MemoryObject *,
+            std::pair < ref < Expr > , ref < Expr >> > ::const_iterator
+            it1 = sf.nonLocalsRead.begin(),
+                    ie1 = sf.nonLocalsRead.end();
+            it1 != ie1;
+    ++it1) {
+      const MemoryObject *mo = it1->first;
+      ObjectPair op;
+      ref <ConstantExpr> address =
+              llvm::dyn_cast<ConstantExpr>(mo->getBaseExpr());
+
+      if (!addressSpace.resolveOne(address, op))
+        continue;
+
+      const ObjectState *os = op.second;
+
+      const llvm::AllocaInst *ai =
+              llvm::dyn_cast<llvm::AllocaInst>(mo->allocSite);
+
+      if (!ai)
+        continue;
+
+      out << f->getName();
+      if (onStack)
+        out << " (stack): ";
+      else
+        out << " (exited): ";
+
+      std::string buf;
+      llvm::raw_string_ostream instrString(buf);
+      mo->allocSite->print(instrString);
+      instrString.flush();
+
+      size_t spacePos;
+      if ((spacePos = buf.find(" ", 3)) != std::string::npos) {
+        std::string varName = buf.substr(3, spacePos - 3);
+        out << varName << "[";
+        it1->second.first->print(out);
+        out << "] (non-local, read): ";
+      } else {
+        out << "(unknown)[";
+        it1->second.first->print(out);
+        out << "] (non-local, read): ";
+      }
+      out << "\n";
+
+      // Next we print more specific information based on the type of the
+      // allocation
+      dumpHandleType(out, "", os, ai->getAllocatedType(), dataLayout);
+    }
+
+    for (std::map<const MemoryObject *,
+            std::pair < ref < Expr > , ref < Expr >> > ::const_iterator
+            it1 = sf.nonLocalsWritten.begin(),
+                    ie1 = sf.nonLocalsWritten.end();
+            it1 != ie1;
+    ++it1) {
+      const MemoryObject *mo = it1->first;
+      ObjectPair op;
+      ref <ConstantExpr> address =
+              llvm::dyn_cast<ConstantExpr>(mo->getBaseExpr());
+
+      if (!addressSpace.resolveOne(address, op))
+        continue;
+
+      const ObjectState *os = op.second;
+
+      const llvm::AllocaInst *ai =
+              llvm::dyn_cast<llvm::AllocaInst>(mo->allocSite);
+
+      if (!ai)
+        continue;
+
+      out << f->getName();
+      if (onStack)
+        out << " (stack): ";
+      else
+        out << " (exited): ";
+
+      std::string buf;
+      llvm::raw_string_ostream instrString(buf);
+      mo->allocSite->print(instrString);
+      instrString.flush();
+
+      size_t spacePos;
+      if ((spacePos = buf.find(" ", 3)) != std::string::npos) {
+        std::string varName = buf.substr(3, spacePos - 3);
+        out << varName << "[";
+        it1->second.first->print(out);
+        out << "]: (non-local, written)";
+      } else {
+        out << "(unknown):";
+        out << "(unknown)[";
+        it1->second.first->print(out);
+        out << "]: (non-local, written)";
+      }
+      out << "\n";
+      out << "\n";
+
     }
   }
 }

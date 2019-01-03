@@ -49,6 +49,8 @@ namespace klee {
         CallPathNode *callPathNode;
 
         std::vector<const MemoryObject *> allocas;
+        std::map<const MemoryObject *, std::pair<ref<Expr>, ref<Expr>>> nonLocalsRead;
+        std::map<const MemoryObject *, std::pair<ref<Expr>, ref<Expr>>> nonLocalsWritten;
         Cell *locals;
 
         /// Minimum distance to an uncovered instruction once the function

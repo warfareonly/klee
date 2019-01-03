@@ -3925,6 +3925,11 @@ void Executor::executeMemoryOperation(ExecutionState &state,
                 } else {
                     ObjectState *wos = state.addressSpace.getWriteable(mo, os);
                     wos->write(offset, value);
+                    if (state.stack.back().nonLocalsWritten.find(mo) !=
+                        state.stack.back().nonLocalsWritten.end() ||
+                        !llvm::isa<ConstantExpr>(value))
+                        state.stack.back().nonLocalsWritten[mo] =
+                                std::make_pair(offset, value);
                 }
             } else {
                 ref<Expr> result = os->read(offset, type);
@@ -3933,6 +3938,10 @@ void Executor::executeMemoryOperation(ExecutionState &state,
                     result = replaceReadWithSymbolic(state, result);
 
                 bindLocal(target, state, result);
+                if (state.stack.back().nonLocalsRead.find(mo) !=
+                    state.stack.back().nonLocalsRead.end() ||
+                    !llvm::isa<ConstantExpr>(result))
+                    state.stack.back().nonLocalsRead[mo] = std::make_pair(offset, result);
             }
 
             return;
