@@ -1630,9 +1630,9 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
 //                errs() << "\ncon-cond=" << cond << "\n";
                 cond = optimizer.optimizeExpr(cond, false);
 //                errs() << "\nopt-cond=" << cond << "\n";
-                if (usingSeeds) {
-                    cond = concretizeExpr(state, cond);
-                }
+//                if (usingSeeds) {
+//                    cond = concretizeExpr(state, cond);
+//                }
                 Executor::StatePair branches = fork(state, cond, false);
 //                errs() << "\n[Executor.ccp] 1625 \n";
                 // NOTE: There is a hidden dependency here, markBranchVisited
