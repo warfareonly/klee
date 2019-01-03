@@ -3163,7 +3163,8 @@ void Executor::terminateStateOnError(ExecutionState &state,
             msg << "assembly.ll line: " << ii.assemblyLine << "\n";
         }
         msg << "Stack: \n";
-        state.dumpStack(msg);
+        state.dumpStack(msg, kmodule->targetData.get());
+
 
         std::string info_str = info.str();
         if (info_str != "")

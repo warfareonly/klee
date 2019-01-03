@@ -18,6 +18,7 @@
 
 #include "Memory.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -354,7 +355,8 @@ bool ExecutionState::merge(const ExecutionState &b) {
   return true;
 }
 
-void ExecutionState::dumpStack(llvm::raw_ostream &out) const {
+void ExecutionState::dumpStack(llvm::raw_ostream &out,
+                               llvm::DataLayout *dataLayout) const {
   unsigned idx = 0;
   const KInstruction *target = prevPC;
   for (ExecutionState::stack_ty::const_reverse_iterator
@@ -385,5 +387,195 @@ void ExecutionState::dumpStack(llvm::raw_ostream &out) const {
       out << " at " << ii.file << ":" << ii.line;
     out << "\n";
     target = sf.caller;
+  }
+
+
+  if (!dataLayout)
+    return;
+
+  out << "Stack Content:\n";
+
+  // Get the deepest application frame outside libc
+  target = prevPC;
+  for (ExecutionState::stack_ty::const_reverse_iterator it = stack.rbegin(),
+               ie = stack.rend();
+       it != ie; ++it) {
+    dumpFrame(out, *it, target, dataLayout);
+    target = it->caller;
+  }
+}
+
+void ExecutionState::dumpFrame(llvm::raw_ostream &out, const StackFrame &sf,
+                               const KInstruction *target,
+                               llvm::DataLayout *dataLayout) const {
+  const InstructionInfo &ii = *(target->info);
+  std::size_t found = ii.file.find("libc");
+  if (found == std::string::npos) {
+
+    Function *f = sf.kf->function;
+    out << f->getName() << ":\n";
+    for (std::vector<const MemoryObject *>::const_iterator
+                 it1 = sf.allocas.begin(),
+                 ie1 = sf.allocas.end();
+         it1 != ie1; ++it1) {
+      const MemoryObject *mo = *it1;
+      ObjectPair op;
+      ref<ConstantExpr> address =
+              llvm::dyn_cast<ConstantExpr>(mo->getBaseExpr());
+
+      if (!addressSpace.resolveOne(address, op))
+        continue;
+
+      const ObjectState *os = op.second;
+
+      const llvm::AllocaInst *ai =
+              llvm::dyn_cast<llvm::AllocaInst>(mo->allocSite);
+
+      if (!ai)
+        continue;
+
+      out << "\tName: ";
+      mo->allocSite->print(out);
+
+      // Next we print more specific information based on the type of the
+      // allocation
+      dumpHandleType(out, "", os, ai->getAllocatedType(), dataLayout);
+    }
+  }
+}
+
+void ExecutionState::dumpHandleType(llvm::raw_ostream &out,
+                                    const std::string &prefix,
+                                    const ObjectState *valueObjectState,
+                                    llvm::Type *type,
+                                    llvm::DataLayout *dataLayout) const {
+  // First we print basic information about the allocation
+  ref<Expr> nullPtr = Expr::createPointer(0);
+  out << prefix << "\tType: ";
+  type->print(out);
+  Expr::Width width = dataLayout->getTypeSizeInBits(type);
+  ref<Expr> result = valueObjectState->read(nullPtr, width);
+  out << "\tExpr: ";
+  result->print(out);
+  out << "\n";
+
+  if (type->isPointerTy()) {
+    llvm::PointerType *pType = llvm::dyn_cast<llvm::PointerType>(type);
+    if (llvm::PointerType *ppType =
+            llvm::dyn_cast<llvm::PointerType>(pType->getElementType())) {
+      if (llvm::IntegerType *baseElementType =
+              llvm::dyn_cast<llvm::IntegerType>(ppType->getElementType())) {
+        if (baseElementType->getIntegerBitWidth() == Expr::Int8) {
+          // We have found a storage address of a char ** structure
+          ref<ConstantExpr> address = llvm::dyn_cast<ConstantExpr>(result);
+          ObjectPair op;
+          ref<Expr> nullPtr = Expr::createPointer(0);
+
+          if (addressSpace.resolveOne(address, op)) {
+            unsigned ptrBitWidth = nullPtr->getWidth();
+            unsigned ptrByteWidth = (nullPtr->getWidth()) >> 3;
+            const MemoryObject *mo = op.first;
+            const ObjectState *os = op.second;
+
+            if (mo->size % ptrByteWidth == 0) {
+              for (unsigned i = 0; i < mo->size; i += ptrByteWidth) {
+                ref<Expr> result =
+                        os->read(Expr::createPointer(i), ptrBitWidth);
+                out << prefix << "\t\tAddress: ";
+                result->print(out);
+                out << "\n";
+                address = llvm::dyn_cast<ConstantExpr>(result);
+                if (!address->isZero()) {
+                  if (addressSpace.resolveOne(address, op)) {
+                    const MemoryObject *mo1 = op.first;
+                    const ObjectState *os1 = op.second;
+                    for (unsigned j = 0; j < mo1->size; ++j) {
+                      result = os1->read(Expr::createPointer(j), Expr::Int8);
+                      out << prefix << "\t\t\t" << j << " -> ";
+                      result->print(out);
+                      out << "\n";
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  } else if (type->isArrayTy()) {
+    llvm::ArrayType *aType = llvm::dyn_cast<llvm::ArrayType>(type);
+    uint64_t nElements = aType->getArrayNumElements();
+    if (nElements > 0) {
+      out << prefix << "\t\tArray Content:\n";
+      if (llvm::IntegerType *eType =
+              llvm::dyn_cast<llvm::IntegerType>(aType->getArrayElementType())) {
+        unsigned elementBitSize = eType->getBitWidth();
+        if (elementBitSize == Expr::Int8) {
+          for (unsigned i = 0; i < nElements; ++i) {
+            result = valueObjectState->read(Expr::createPointer(i), Expr::Int8);
+            out << prefix << "\t\t\t" << i << " -> ";
+            result->print(out);
+            out << "\n";
+          }
+        }
+      } else if (llvm::StructType *eType = llvm::dyn_cast<llvm::StructType>(
+              aType->getArrayElementType())) {
+        uint64_t offset = 0;
+        unsigned elemBitSize = dataLayout->getTypeSizeInBits(eType);
+        unsigned elemByteSize = elemBitSize >> 3;
+        for (unsigned i = 0; i < nElements; ++i) {
+          dumpHandleStructType(out, prefix, valueObjectState, offset, eType,
+                               dataLayout);
+          offset += elemByteSize;
+        }
+      }
+    }
+  } else if (type->isStructTy()) {
+    llvm::StructType *cType = llvm::dyn_cast<llvm::StructType>(type);
+    dumpHandleStructType(out, prefix, valueObjectState, 0, cType, dataLayout);
+  }
+}
+
+void ExecutionState::dumpHandleStructType(llvm::raw_ostream &out,
+                                          const std::string &prefix,
+                                          const ObjectState *valueObjectState,
+                                          uint64_t initOffset,
+                                          llvm::StructType *type,
+                                          llvm::DataLayout *dataLayout) const {
+  unsigned nElements = type->getStructNumElements();
+  uint64_t offset = initOffset;
+
+  out << prefix << "\t\tStruct Content:\n";
+  for (unsigned i = 0; i < nElements; ++i) {
+    llvm::Type *eType = type->getStructElementType(i);
+    unsigned elemBitSize = dataLayout->getTypeSizeInBits(eType);
+    unsigned elemByteSize = elemBitSize >> 3;
+
+    ref<Expr> result =
+            valueObjectState->read(Expr::createPointer(offset), elemBitSize);
+
+    out << prefix << "\t\t\t";
+    eType->print(out);
+    out << ":\t" << i << " -> ";
+    result->print(out);
+    out << "\n";
+
+    if (eType->isPointerTy()) {
+      if (ConstantExpr *address = llvm::dyn_cast<ConstantExpr>(result)) {
+        ObjectPair op;
+        if (addressSpace.resolveOne(address, op)) {
+          const ObjectState *os = op.second;
+          if (llvm::PointerType *pType =
+                  llvm::dyn_cast<llvm::PointerType>(eType)) {
+            llvm::Type *peType = pType->getPointerElementType();
+            std::string newPrefix = "\t\t\t" + prefix;
+            dumpHandleType(out, newPrefix, os, peType, dataLayout);
+          }
+        }
+      }
+    }
+
+    offset += elemByteSize;
   }
 }
