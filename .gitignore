@@ -4,8 +4,12 @@ Debug/
 Debug+Asserts/
 Output/
 
+.idea/
+
+
 # commonly used as cmake build directory
 /build
+cmake-build-debug/
 
 cscope.*
 *~

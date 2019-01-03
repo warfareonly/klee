@@ -1568,6 +1568,10 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
                 assert(!caller && "caller set on initial stack frame");
                 terminateStateOnExit(state);
             } else {
+
+
+                if (OutputLocalsOnError)
+                    state.addStateInfoAsReturn(ki, kmodule->targetData.get());
                 state.popFrame();
 
                 if (statsTracker)
@@ -3163,7 +3167,8 @@ void Executor::terminateStateOnError(ExecutionState &state,
             msg << "assembly.ll line: " << ii.assemblyLine << "\n";
         }
         msg << "Stack: \n";
-        state.dumpStack(msg);
+        state.dumpStack(msg, kmodule->targetData.get());
+
 
         std::string info_str = info.str();
         if (info_str != "")
@@ -3920,6 +3925,11 @@ void Executor::executeMemoryOperation(ExecutionState &state,
                 } else {
                     ObjectState *wos = state.addressSpace.getWriteable(mo, os);
                     wos->write(offset, value);
+                    if (state.stack.back().nonLocalsWritten.find(mo) !=
+                        state.stack.back().nonLocalsWritten.end() ||
+                        !llvm::isa<ConstantExpr>(value))
+                        state.stack.back().nonLocalsWritten[mo] =
+                                std::make_pair(offset, value);
                 }
             } else {
                 ref<Expr> result = os->read(offset, type);
@@ -3928,6 +3938,10 @@ void Executor::executeMemoryOperation(ExecutionState &state,
                     result = replaceReadWithSymbolic(state, result);
 
                 bindLocal(target, state, result);
+                if (state.stack.back().nonLocalsRead.find(mo) !=
+                    state.stack.back().nonLocalsRead.end() ||
+                    !llvm::isa<ConstantExpr>(result))
+                    state.stack.back().nonLocalsRead[mo] = std::make_pair(offset, result);
             }
 
             return;
