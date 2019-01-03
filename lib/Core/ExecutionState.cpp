@@ -74,12 +74,12 @@ ExecutionState::ExecutionState(KFunction *kf) :
     coveredNew(false),
     forkDisabled(false),
     ptreeNode(0),
-    steppedInstructions(0){
+    steppedInstructions(0), functionStateInfo(new FunctionStateInfo()) {
   pushFrame(0, kf);
 }
 
 ExecutionState::ExecutionState(const std::vector<ref<Expr> > &assumptions)
-    : constraints(assumptions), ptreeNode(0) {}
+    : constraints(assumptions), ptreeNode(0) , functionStateInfo(new FunctionStateInfo())  {}
 
 ExecutionState::~ExecutionState() {
   for (unsigned int i=0; i<symbolics.size(); i++)
@@ -124,7 +124,8 @@ ExecutionState::ExecutionState(const ExecutionState& state):
     symbolics(state.symbolics),
     arrayNames(state.arrayNames),
     openMergeStack(state.openMergeStack),
-    steppedInstructions(state.steppedInstructions)
+    steppedInstructions(state.steppedInstructions),
+    functionStateInfo(state.functionStateInfo->copy())
 {
   for (unsigned int i=0; i<symbolics.size(); i++)
     symbolics[i].first->refCount++;
@@ -245,7 +246,7 @@ bool ExecutionState::merge(const ExecutionState &b) {
                                         ie = aSuffix.end();
          it != ie; ++it)
       llvm::errs() << *it << ", ";
-    llvm::errs() << "]\n";
+    llvm::errs() << "]>";
     llvm::errs() << "\tB suffix: [";
     for (std::set<ref<Expr> >::iterator it = bSuffix.begin(),
                                         ie = bSuffix.end();
@@ -400,14 +401,19 @@ void ExecutionState::dumpStack(llvm::raw_ostream &out,
   for (ExecutionState::stack_ty::const_reverse_iterator it = stack.rbegin(),
                ie = stack.rend();
        it != ie; ++it) {
-    dumpFrame(out, *it, target, dataLayout);
+    std::string buf;
+    llvm::raw_string_ostream frameStr(buf);
+    dumpFrame(frameStr, *it, target, dataLayout, true);
+    frameStr.flush();
+    functionStateInfo->addStateInfo(it->kf->function, buf);
     target = it->caller;
   }
+  functionStateInfo->print(out);
 }
 
 void ExecutionState::dumpFrame(llvm::raw_ostream &out, const StackFrame &sf,
                                const KInstruction *target,
-                               llvm::DataLayout *dataLayout) const {
+                               llvm::DataLayout *dataLayout, bool onStack) const {
   const InstructionInfo &ii = *(target->info);
   std::size_t found = ii.file.find("libc");
   if (found == std::string::npos) {
@@ -434,8 +440,25 @@ void ExecutionState::dumpFrame(llvm::raw_ostream &out, const StackFrame &sf,
       if (!ai)
         continue;
 
-      out << "\tName: ";
-      mo->allocSite->print(out);
+      out << f->getName();
+      mo->allocSite->print(out);	       if (onStack)
+        out << " (stack): ";
+      else
+        out << " (exited): ";
+
+      std::string buf;
+      llvm::raw_string_ostream instrString(buf);
+      mo->allocSite->print(instrString);
+      instrString.flush();
+
+      size_t spacePos;
+      if ((spacePos = buf.find(" ", 3)) != std::string::npos) {
+        std::string varName = buf.substr(3, spacePos - 3);
+        out << varName << ":";
+      } else {
+        out << "(unknown):";
+      }
+      out << "\n";
 
       // Next we print more specific information based on the type of the
       // allocation
@@ -578,4 +601,17 @@ void ExecutionState::dumpHandleStructType(llvm::raw_ostream &out,
 
     offset += elemByteSize;
   }
+
+}
+
+void ExecutionState::addStateInfoAsReturn(const KInstruction *target,
+                                          llvm::DataLayout *dataLayout) {
+  llvm::Function *f = target->inst->getParent()->getParent();
+  std::string buffer;
+  llvm::raw_string_ostream strStream(buffer);
+  const StackFrame &sf = stack.back();
+
+  dumpFrame(strStream, sf, target, dataLayout);
+  strStream.flush();
+  functionStateInfo->addStateInfo(f, buffer);
 }

@@ -1568,6 +1568,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
                 assert(!caller && "caller set on initial stack frame");
                 terminateStateOnExit(state);
             } else {
+                state.addStateInfoAsReturn(ki, kmodule->targetData.get());
                 state.popFrame();
 
                 if (statsTracker)

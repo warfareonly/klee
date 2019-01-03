@@ -18,6 +18,7 @@
 
 // FIXME: We do not want to be exposing these? :(
 #include "../../lib/Core/AddressSpace.h"
+#include "../../lib/Core/FunctionStateInfo.h"
 #include "klee/Internal/Module/KInstIterator.h"
 #include "llvm/IR/DataLayout.h"
 #include <map>
@@ -164,8 +165,11 @@ namespace klee {
         // The numbers of times this state has run through Executor::stepInstruction
         std::uint64_t steppedInstructions;
 
+        // Function state info
+        ref<FunctionStateInfo> functionStateInfo;
+
     private:
-        ExecutionState() : ptreeNode(0) {}
+        ExecutionState() : ptreeNode(0), functionStateInfo(new FunctionStateInfo()) {}
 
     public:
         ExecutionState(KFunction *kf);
@@ -195,7 +199,7 @@ namespace klee {
 
         void dumpFrame(llvm::raw_ostream &out, const StackFrame &sf,
                        const KInstruction *target,
-                       llvm::DataLayout *dataLayout) const;
+                       llvm::DataLayout *dataLayout, bool onStack = false) const;
 
         void dumpHandleType(llvm::raw_ostream &out, const std::string &prefix,
                             const ObjectState *valueObjectState, llvm::Type *type,
@@ -205,6 +209,8 @@ namespace klee {
                                   const ObjectState *valueObjectState,
                                   uint64_t initOffset, llvm::StructType *type,
                                   llvm::DataLayout *dataLayout) const;
+        void addStateInfoAsReturn(const KInstruction *target,
+                                  llvm::DataLayout *dataLayout);
     };
 }
 
