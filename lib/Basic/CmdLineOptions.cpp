@@ -24,7 +24,12 @@ using namespace llvm;
 
 namespace klee {
 
-cl::extrahelp TimeFormatInfo(
+    cl::opt<bool> OutputLocalsOnError(
+            "output-locals-on-error", cl::init(false),
+            cl::desc("Output local values in *.err file (default=off)"));
+
+
+    cl::extrahelp TimeFormatInfo(
   "\nTime format used by KLEE's options\n"
   "\n"
   "  Time spans can be specified in two ways:\n"

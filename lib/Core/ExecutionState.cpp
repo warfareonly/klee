@@ -390,6 +390,8 @@ void ExecutionState::dumpStack(llvm::raw_ostream &out,
     target = sf.caller;
   }
 
+  if (!OutputLocalsOnError)
+    return;
 
   if (!dataLayout)
     return;
