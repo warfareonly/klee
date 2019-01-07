@@ -145,6 +145,10 @@ namespace {
     cl::opt<bool>
             DebugCheckForImpliedValues("debug-check-for-implied-values");
 
+    cl::opt<bool> PrintTrace(
+            "print-trace", cl::init(false),
+            cl::desc("Output source location for each instruction executed (default=off)"));
+
 
     cl::opt<bool>
             SimplifySymIndices("simplify-sym-indices",
@@ -1550,7 +1554,11 @@ static inline const llvm::fltSemantics *fpWidthToSemantics(unsigned width) {
 
 void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
     Instruction *i = ki->inst;
-//    errs() << "\n[executeInstruction]\n";
+    if (PrintTrace)
+        errs() << "\n[trace] " << ki->getSourceLocation() << " - " << ki->inst->getOpcode()  << "\n";
+//    std::string constraints;
+//    getConstraintLog(state, constraints, Executor::SMTLIB2);
+//    errs() << "[sym-path] " << constraints << "\n";
     switch (i->getOpcode()) {
         // Control flow
         case Instruction::Ret: {
@@ -2858,19 +2866,19 @@ void Executor::run(ExecutionState &initialState) {
             for (int k = 0; k < num_obj; k++) {
                 KTestObject obj = SeedInfo(*it).input->objects[k];
                 int num_bytes = obj.numBytes;
-                printf("seed-obj[%d].name = %s\n", k, obj.name);
+//                printf("seed-obj[%d].name = %s\n", k, obj.name);
 
                 if (strcmp(obj.name, "A-data-stat") == 0) {
                     A_data_stat = (int *) malloc(num_bytes * sizeof(int));
                     for (int i = 0; i < num_bytes; i++) {
                         A_data_stat[i] = obj.bytes[i];
-                        printf("%d ", obj.bytes[i]);
+//                        printf("%d ", obj.bytes[i]);
                     }
                 } else if (strcmp(obj.name, "A-data") == 0) {
                     A_data = (int *) malloc(num_bytes * sizeof(int));
                     for (int i = 0; i < num_bytes; i++) {
                         A_data[i] = obj.bytes[i];
-                        printf("%d ", A_data[i]);
+//                        printf("%d ", A_data[i]);
                     }
                 }
 
