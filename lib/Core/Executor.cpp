@@ -149,6 +149,10 @@ namespace {
             "print-trace", cl::init(false),
             cl::desc("Output source location for each instruction executed (default=off)"));
 
+    cl::opt<bool> PrintPath(
+            "print-path", cl::init(false),
+            cl::desc("Output path condition along with source location as and when it's updated (default=off)"));
+
 
     cl::opt<bool>
             SimplifySymIndices("simplify-sym-indices",
@@ -1036,6 +1040,7 @@ void Executor::addConstraint(ExecutionState &state, ref<Expr> condition) {
         return;
     }
 
+
     // Check to see if this constraint violates seeds.
     std::map < ExecutionState * , std::vector < SeedInfo > > ::iterator
     it =
@@ -1059,8 +1064,14 @@ void Executor::addConstraint(ExecutionState &state, ref<Expr> condition) {
         if (warn)
             klee_warning("seeds patched for violating constraint");
     }
-    if (!res)
+    if (!res) {
+        if(PrintPath) {
+            std::string constraints;
+            getConstraintLog(state, constraints, Interpreter::SMTLIB2);
+            errs() << "\n[path] " << state.pc->getSourceLocation() << " : " << constraints<< "\n";
+        }
         state.addConstraint(condition);
+    }
     if (ivcEnabled)
         doImpliedValueConcretization(state, condition,
                                      ConstantExpr::alloc(1, Expr::Bool));
