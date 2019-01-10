@@ -149,6 +149,10 @@ namespace {
             "print-trace", cl::init(false),
             cl::desc("Output source location for each instruction executed (default=off)"));
 
+    cl::opt<bool> PrintStack(
+            "print-stack", cl::init(false),
+            cl::desc("Output stack information on error exit (default=off)"));
+
     cl::opt<bool> PrintPath(
             "print-path", cl::init(false),
             cl::desc("Output path condition along with source location as and when it's updated (default=off)"));
@@ -1567,6 +1571,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
     Instruction *i = ki->inst;
     if (PrintTrace)
         errs() << "\n[trace] " << ki->getSourceLocation() << " - " << ki->inst->getOpcode()  << "\n";
+
 //    std::string constraints;
 //    getConstraintLog(state, constraints, Executor::SMTLIB2);
 //    errs() << "[sym-path] " << constraints << "\n";
@@ -3187,6 +3192,11 @@ void Executor::terminateStateOnError(ExecutionState &state,
         }
         msg << "Stack: \n";
         state.dumpStack(msg, kmodule->targetData.get());
+
+        if (PrintStack){
+            errs() << "Stack: \n";
+            state.dumpStack(errs(), kmodule->targetData.get());
+        }
 
 
         std::string info_str = info.str();
