@@ -11,7 +11,7 @@
 #include "SpecialFunctionHandler.h"
 #include "TimingSolver.h"
 #include "klee/MergeHandler.h"
-
+#include "klee/util/ExprSMTLIBPrinter.h"
 #include "klee/ExecutionState.h"
 
 #include "klee/Internal/Module/KInstruction.h"
@@ -497,7 +497,18 @@ void SpecialFunctionHandler::handlePrintExpr(ExecutionState &state,
          "invalid number of arguments to klee_print_expr");
 
   std::string msg_str = readStringAtAddress(state, arguments[0]);
-  llvm::errs() << msg_str << ":" << arguments[1] << "\n";
+
+  std::string Str;
+  llvm::raw_string_ostream info(Str);
+  ExprSMTLIBPrinter printer;
+  printer.setOutput(info);
+  const ref<Expr> expr = arguments[1];
+  ExprSMTLIBPrinter::SMTLIB_SORT sort = printer.getSort(expr);
+  printer.printExpression(expr, sort);
+//  printer.generateOutput();
+  std::string res = info.str();
+  llvm::errs() << msg_str << ":" << res << "\n";
+
 }
 
 void SpecialFunctionHandler::handleSetForking(ExecutionState &state,
