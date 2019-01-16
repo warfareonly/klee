@@ -149,6 +149,10 @@ namespace {
             "print-trace", cl::init(false),
             cl::desc("Output source location for each instruction executed (default=off)"));
 
+    cl::opt<bool> NoExitOnError(
+            "no-exit-on-error", cl::init(false),
+            cl::desc("Continue execution even after finding an error (default=off)"));
+
     cl::opt<bool> PrintStack(
             "print-stack", cl::init(false),
             cl::desc("Output stack information on error exit (default=off)"));
@@ -3172,6 +3176,11 @@ void Executor::terminateStateOnError(ExecutionState &state,
     Instruction *lastInst;
     const InstructionInfo &ii = getLastNonKleeInternalInstruction(state, &lastInst);
 
+    if (NoExitOnError){
+        errs() << "\nFound Error!!\n";
+        return;
+    }
+
     if (EmitAllErrors ||
         emittedErrors.insert(std::make_pair(lastInst, message)).second) {
         if (ii.file != "") {
@@ -3194,6 +3203,7 @@ void Executor::terminateStateOnError(ExecutionState &state,
         state.dumpStack(msg, kmodule->targetData.get());
 
         if (PrintStack){
+
             errs() << "Stack: \n";
             state.dumpStack(errs(), kmodule->targetData.get());
         }
