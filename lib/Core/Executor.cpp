@@ -161,6 +161,10 @@ namespace {
             "print-path", cl::init(false),
             cl::desc("Output path condition along with source location as and when it's updated (default=off)"));
 
+    cl::opt<bool> ResolvePath(
+            "resolve-path", cl::init(false),
+            cl::desc("In seed mode resolve path using seed values (default=off)"));
+
 
     cl::opt<bool>
             SimplifySymIndices("simplify-sym-indices",
@@ -846,10 +850,32 @@ Executor::fork(ExecutionState &current, ref<Expr> condition, bool isInternal) {
     }
 //    errs() << "\n[fork] 831\n";
     time::Span timeout = coreSolverTimeout;
+//    errs() << it->second.size() << "\n";
     if (isSeeding)
         timeout *= it->second.size();
+//    errs() << "timeout = " << timeout << "\n";
     solver->setTimeout(timeout);
-    bool success = solver->evaluate(current, condition, res);
+    bool  success = solver->evaluate(current, condition, res);
+//    if (usingSeeds) {
+//        ref<Expr> clone_cond = cloneTree(condition);
+//        ref<Expr> conc_cond = concretizeExpr(current, clone_cond);
+//        success = solver->evaluate(current, conc_cond, res);
+//        if (!(dyn_cast<ConstantExpr>(condition))){
+//            errs() << "res = " << res << "\n";
+//            if (res == Solver::True) {
+//                errs() << "true banch\n";
+//                addConstraint(current, condition);
+//            }
+//            else {
+//                errs() << "false branch\n";
+//                addConstraint(current, Expr::createIsZero(condition));
+//            }
+//        }
+//
+//    }  else {
+//        success = solver->evaluate(current, condition, res);
+//    }
+//    errs() << "after eval\n";
     solver->setTimeout(time::Span());
     if (!success) {
         current.pc = current.prevPC;
@@ -950,7 +976,7 @@ Executor::fork(ExecutionState &current, ref<Expr> condition, bool isInternal) {
                 current.pathOS << "1";
             }
         }
-
+//        errs() << "return true sate\n";
         return StatePair(&current, 0);
     } else if (res == Solver::False) {
         if (!isInternal) {
@@ -958,7 +984,7 @@ Executor::fork(ExecutionState &current, ref<Expr> condition, bool isInternal) {
                 current.pathOS << "0";
             }
         }
-
+//        errs() << "return false state\n";
         return StatePair(0, &current);
     } else {
         TimerStatIncrementer timer(stats::forkTime);
@@ -1650,6 +1676,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
             break;
         }
         case Instruction::Br: {
+//            errs() << "branch instr\n";
             BranchInst *bi = cast<BranchInst>(i);
             if (bi->isUnconditional()) {
                 transferToBasicBlock(bi->getSuccessor(0), bi->getParent(), state);
@@ -1662,9 +1689,9 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
 //                errs() << "\ncon-cond=" << cond << "\n";
                 cond = optimizer.optimizeExpr(cond, false);
 //                errs() << "\nopt-cond=" << cond << "\n";
-//                if (usingSeeds) {
-//                    cond = concretizeExpr(state, cond);
-//                }
+                if (usingSeeds && ResolvePath) {
+                    cond = concretizeExpr(state, cond);
+                }
                 Executor::StatePair branches = fork(state, cond, false);
 //                errs() << "\n[Executor.ccp] 1625 \n";
                 // NOTE: There is a hidden dependency here, markBranchVisited
