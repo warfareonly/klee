@@ -862,13 +862,13 @@ Executor::fork(ExecutionState &current, ref<Expr> condition, bool isInternal) {
         ref<Expr> conc_cond = concretizeExpr(current, clone_cond);
         success = solver->evaluate(current, conc_cond, res);
         if (!(dyn_cast<ConstantExpr>(condition))){
-            errs() << "res = " << res << "\n";
+//            errs() << "res = " << res << "\n";
             if (res == Solver::True) {
-                errs() << "true banch\n";
+//                errs() << "true banch\n";
                 addConstraint(current, condition);
             }
             else {
-                errs() << "false branch\n";
+//                errs() << "false branch\n";
                 addConstraint(current, Expr::createIsZero(condition));
             }
         }
@@ -876,7 +876,7 @@ Executor::fork(ExecutionState &current, ref<Expr> condition, bool isInternal) {
     }  else {
         success = solver->evaluate(current, condition, res);
     }
-    errs() << "after eval\n";
+//    errs() << "after eval\n";
     solver->setTimeout(time::Span());
     if (!success) {
         current.pc = current.prevPC;
@@ -1689,7 +1689,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
 //                errs() << "\npre-cond=" << cond << "\n";
 //                errs() << "\ncon-cond=" << cond << "\n";
                 cond = optimizer.optimizeExpr(cond, false);
-                errs() << "\nopt-cond=" << cond << "\n";
+//                errs() << "\nopt-cond=" << cond << "\n";
                 if (usingSeeds && ResolvePath) {
                     cond = concretizeExpr(state, cond);
                 }
