@@ -3209,10 +3209,6 @@ void Executor::terminateStateOnError(ExecutionState &state,
         return;
     }
 
-    if (usingSeeds && PrintPath){
-        exit(0);
-    }
-
 
     if (EmitAllErrors ||
         emittedErrors.insert(std::make_pair(lastInst, message)).second) {
@@ -3232,6 +3228,11 @@ void Executor::terminateStateOnError(ExecutionState &state,
             msg << "Line: " << ii.line << "\n";
             msg << "assembly.ll line: " << ii.assemblyLine << "\n";
         }
+
+        if (usingSeeds && PrintPath){
+            exit(0);
+        }
+
         msg << "Stack: \n";
         state.dumpStack(msg, kmodule->targetData.get());
 
