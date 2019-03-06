@@ -3209,6 +3209,11 @@ void Executor::terminateStateOnError(ExecutionState &state,
         return;
     }
 
+    if (usingSeeds && PrintTrace){
+        exit(0);
+    }
+
+
     if (EmitAllErrors ||
         emittedErrors.insert(std::make_pair(lastInst, message)).second) {
         if (ii.file != "") {
