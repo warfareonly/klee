@@ -3209,7 +3209,7 @@ void Executor::terminateStateOnError(ExecutionState &state,
         return;
     }
 
-    if (usingSeeds && PrintTrace){
+    if (usingSeeds && PrintPath){
         exit(0);
     }
 
