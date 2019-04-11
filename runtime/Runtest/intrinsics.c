@@ -184,5 +184,6 @@ void klee_abort() {
 
 /* not sure we should even define.  is for debugging. */
 void klee_print_expr(const char *msg, ...) { }
+void klee_print_stmt(const char *msg) { }
 
 void klee_set_forking(unsigned enable) { }
