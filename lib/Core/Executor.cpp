@@ -3230,6 +3230,7 @@ void Executor::terminateStateOnError(ExecutionState &state,
         }
 
         if (usingSeeds && PrintPath){
+            interpreterHandler->processTestCase(state, msg.str().c_str(), suffix);
             exit(0);
         }
 
