@@ -149,6 +149,9 @@ namespace {
             "print-trace", cl::init(false),
             cl::desc("Output source location for each instruction executed (default=off)"));
 
+    cl::opt<bool> PrintLLVMInstr(
+            "print-llvm-inst", cl::init(false),
+            cl::desc("Output LLVM instruction for each instruction executed (default=off)"));
     cl::opt<bool> NoExitOnError(
             "no-exit-on-error", cl::init(false),
             cl::desc("Continue execution even after finding an error (default=off)"));
@@ -1602,6 +1605,13 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
     Instruction *i = ki->inst;
     if (PrintTrace)
         errs() << "\n[trace] " << ki->getSourceLocation() << " - " << ki->inst->getOpcode()  << "\n";
+
+    if (PrintLLVMInstr)
+        errs() << "\n[LLVM] " << *(ki->inst)  << "\n";
+
+
+
+
 
 //    std::string constraints;
 //    getConstraintLog(state, constraints, Executor::SMTLIB2);
