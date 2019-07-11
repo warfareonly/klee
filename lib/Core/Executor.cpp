@@ -1603,12 +1603,14 @@ static inline const llvm::fltSemantics *fpWidthToSemantics(unsigned width) {
 
 void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
     Instruction *i = ki->inst;
-    if (PrintTrace)
-        errs() << "\n[trace] " << ki->getSourceLocation() << " - " << ki->inst->getOpcode()  << "\n";
+    std::string sourceLoc = ki->getSourceLocation();
+    if (sourceLoc.find("uclibc") == std::string:npos){
+        if (PrintTrace)
+            errs() << "\n[trace] " << sourceLoc << " - " << ki->inst->getOpcode() << "\n";
 
-    if (PrintLLVMInstr)
-        errs() << "\n[LLVM] " << *(ki->inst)  << "\n";
-
+        if (PrintLLVMInstr)
+            errs() << "\n[LLVM] " << *(ki->inst) << "\n";
+    }
 
 
 
