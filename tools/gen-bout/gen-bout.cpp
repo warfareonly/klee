@@ -11,8 +11,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -21,7 +21,6 @@
 #if defined(__FreeBSD__) || defined(__minix)
 #define stat64 stat
 #endif
-
 
 #define MAX 64
 static void push_obj(KTest *b, const char *name, unsigned total_bytes,
@@ -53,17 +52,30 @@ void print_usage_and_exit(char *program_name) {
           "e.g., for using a concrete crashing input as a ktest seed.\n",
           program_name);
   fprintf(stderr, "Usage: %s <arguments>\n", program_name);
-  fprintf(stderr, "       <arguments> are the command-line arguments of the "
-                  "programs, with the following treated as special:\n");
+
+  fprintf(stderr, "       --sym-arg <argument> are the command-line "
+                  "argument of the programs\n");
+  fprintf(stderr, "       --sym-args <N args> <arguments> are the command-line "
+                  "arguments of the "
+                  "programs, where N is the number of arguments followed by the argument list\n");
+
   fprintf(stderr, "       --sym-stdin <filename>      - Specifying a file that "
                   "is the content of the stdin (only once).\n");
+
   fprintf(stderr, "       --sym-stdout <filename>     - Specifying a file that "
                   "is the content of the stdout (only once).\n");
+
   fprintf(stderr, "       --sym-file <filename>       - Specifying a file that "
                   "is the content of a file named A provided for the program "
                   "(only once).\n");
-  fprintf(stderr, "   Ex: %s -o -p -q file1 --sym-stdin file2 --sym-file file3 "
-                  "--sym-stdout file4\n",
+
+  fprintf(stderr, "       --second-var <N vars> <identifier> <value>       - "
+                  "Specifying a list of second order variables where N is the number of "
+                  "variables followed by each variable's identifier and value pair.\n");
+
+  fprintf(stderr,
+          "   Ex: %s -o -p -q file1 --sym-stdin file2 --sym-file file3 "
+          "--sym-stdout file4\n",
           program_name);
   exit(1);
 }
@@ -121,8 +133,31 @@ int main(int argc, char *argv[]) {
         print_usage_and_exit(argv[0]);
 
       content_filenames_list[file_counter++] = argv[i];
-    } else {
-      long nbytes = strlen(argv[i]) + 1;
+
+    } else if (strcmp(argv[i], "--sym-args") == 0 ||
+               strcmp(argv[i], "-sym-args") == 0) {
+
+
+      static int total_args = 0;
+      int num_args = atoi(argv[++i]);
+
+      for (int i=0; i < num_args; i++){
+        long nbytes = strlen(argv[++i]) + 1;
+        char arg[1024];
+        sprintf(arg, "arg%d", total_args++);
+        push_obj(&b, (const char *)arg, nbytes, (unsigned char *)argv[i]);
+        char *buf1 = (char *)malloc(1024);
+        char *buf2 = (char *)malloc(1024);
+        strcpy(buf1, "-sym-arg");
+        sprintf(buf2, "%ld", nbytes - 1);
+        argv_copy[argv_copy_idx++] = buf1;
+        argv_copy[argv_copy_idx++] = buf2;
+      }
+
+    } else if (strcmp(argv[i], "--sym-arg") == 0 ||
+             strcmp(argv[i], "-sym-arg") == 0) {
+
+      long nbytes = strlen(argv[++i]) + 1;
       static int total_args = 0;
 
       char arg[1024];
