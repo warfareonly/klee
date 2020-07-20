@@ -177,10 +177,12 @@ int main(int argc, char *argv[]) {
 
       printf("Identified a second order variable\n");
       char name[1024];
+      char value[1024];
       sprintf(name, "%s", (unsigned char *)argv[++i]);
       long nbytes = strlen(argv[++i]) + 1;
-      push_obj(&b, (const char *)name, nbytes, (unsigned char *)argv[i]);
-      printf("Name=%s, Value=%s\n",name, argv[i]);
+      sprintf(value, "%s", (unsigned char *)argv[i]);
+      push_obj(&b, (const char *)name, nbytes, (unsigned char *)value);
+      printf("Name=%s, Value=%s, Value in Hex=%x\n",name, value, value);
 
     }
   }
