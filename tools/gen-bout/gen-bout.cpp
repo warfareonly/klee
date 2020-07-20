@@ -182,7 +182,7 @@ int main(int argc, char *argv[]) {
       long read_value = 0;
       sprintf(name, "%s", argv[++i]);
       nbytes = atoi(argv[++i]);
-      read_value = atoi(argv[++i])
+      read_value = atoi(argv[++i]);
       for (int k = 0; k < nbytes; k++) {
         value[k] = read_value >> 8 * (k);
       }
