@@ -2948,7 +2948,7 @@ void Executor::run(ExecutionState &initialState) {
           for (int i = 0; i < num_bytes; i++) {
             value[i] = obj.bytes[i];
           }
-          var_map.insert(obj.name, value);
+          var_map.insert(std::pair<char*, int*>(obj.name, value));
         }
       }
     }
