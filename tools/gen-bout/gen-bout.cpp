@@ -179,14 +179,13 @@ int main(int argc, char *argv[]) {
       char name[1024];
       char value[1024];
       long nbytes = 0;
-      long read_value = 0;
+      unsigned long read_value = 0;
       sprintf(name, "%s", argv[++i]);
       nbytes = atoi(argv[++i]);
       read_value = atoi(argv[++i]);
       printf("\t\tName=%s, Size=%ld, Value=%ld\n",name, nbytes, read_value);
       for (int k = 0; k < nbytes; k++) {
-        value[k] = (unsigned char) read_value >> 8 * (k);
-        read_value = read_value - value[k];
+        value[k] = ((unsigned char) read_value >> 8 * (nbytes - k - 1)) & 0xFF;
       }
       push_obj(&b, (const char *)name, nbytes, (unsigned char *)value);
 //      printf("\t\tName=%s, Size=%ld, Value=%ld, Value in Hex=%s\n",name, nbytes, read_value, *value);
