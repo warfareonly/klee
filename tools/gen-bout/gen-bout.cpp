@@ -175,14 +175,15 @@ int main(int argc, char *argv[]) {
     } else if (strcmp(argv[i], "--second-var") == 0 ||
                strcmp(argv[i], "-second-var") == 0) {
 
-      printf("Identified a second order variable\n");
+      printf("\tIdentified a second order variable\n");
       char name[1024];
       char value[1024];
-      sprintf(name, "%s", (unsigned char *)argv[++i]);
-      long nbytes = strlen(argv[++i]) + 1;
-      sprintf(value, "%s", (unsigned char *)argv[i]);
+      long nbytes = 0;
+      sprintf(name, "%s", argv[++i]);
+      sprintf(nbytes, "%ld", argv[++i]);
+      sprintf(value, "%s", argv[++i]);
       push_obj(&b, (const char *)name, nbytes, (unsigned char *)value);
-      printf("Name=%s, Value=%s, Value in Hex=%x\n",name, value, value);
+      printf("\t\tName=%s, Value=%s, Value in Hex=%x\n",name, value, value);
 
     }
   }
