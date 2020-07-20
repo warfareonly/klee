@@ -3344,7 +3344,7 @@ ref<Expr> Executor::concretizeReadExpr(const ExecutionState &state,
       resolve = ConstantExpr::create(value, width);
       modified = true;
       klee_warning("Concretizing second order variable name:%s and value:%d",
-                   name_src, value);
+                   name_src.c_str(), value);
     }
 
   } else {
