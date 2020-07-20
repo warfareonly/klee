@@ -105,7 +105,7 @@ cl::opt<bool> DumpStatesOnHalt(
     cl::desc("Dump test cases for all active states on exit (default=on)"));
 
 int *A_data, *A_data_stat, *arg;
-struct VarMap var_map;
+struct VarMap *var_map;
 int count_var = 0;
 
 /// The different query logging solvers that can switched on/off
@@ -2950,11 +2950,11 @@ void Executor::run(ExecutionState &initialState) {
         } else {
 
           if (count_var == 0) {
-            var_map = (struct VarMap *)malloc(sizeof(struct VarMap));
+            var_map = malloc(sizeof(struct VarMap));
             count_var++;
           } else {
             var_map =
-                (struct VarMap *)realloc((++count_var) * sizeof(struct VarMap));
+               realloc((++count_var) * sizeof(struct VarMap));
           }
 
           struct VarMap new_var;
@@ -2962,7 +2962,7 @@ void Executor::run(ExecutionState &initialState) {
           new_var.value = (int *) malloc(num_bytes * sizeof(int));
           for (int i = 0; i < num_bytes; i++) {
             new_var.value[i] = obj.bytes[i];
-            var_map.insert(new_var);
+            var_map->insert(new_var);
           }
 
         }
