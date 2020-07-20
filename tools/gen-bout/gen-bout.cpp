@@ -184,8 +184,8 @@ int main(int argc, char *argv[]) {
       nbytes = atoi(argv[++i]);
       read_value = atoi(argv[++i]);
       printf("\t\tName=%s, Size=%ld, Value=%ld\n",name, nbytes, read_value);
-      for (int k = 0; k < nbytes; k++) {
-        value[k] = ((unsigned char) read_value >> 8 * (nbytes - k - 1)) & 0xFF;
+      for (int k = nbytes - 1; k >= 0; k--) {
+        value[k] = (read_value >> (8 * (k)) )& 0xFF;
       }
       push_obj(&b, (const char *)name, nbytes, (unsigned char *)value);
 //      printf("\t\tName=%s, Size=%ld, Value=%ld, Value in Hex=%s\n",name, nbytes, read_value, *value);
