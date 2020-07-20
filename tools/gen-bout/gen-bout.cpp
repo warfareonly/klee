@@ -108,6 +108,7 @@ int main(int argc, char *argv[]) {
   argv_copy_idx = 1;
 
   for (i = 1; i < (unsigned)argc; i++) {
+    printf("Reading argument flag: %s\n", argv[i])
     if (strcmp(argv[i], "--sym-stdout") == 0 ||
         strcmp(argv[i], "-sym-stdout") == 0) {
       if (++i == (unsigned)argc || argv[i][0] == '-')
@@ -172,7 +173,9 @@ int main(int argc, char *argv[]) {
       argv_copy[argv_copy_idx++] = buf2;
 
     } else if (strcmp(argv[i], "--second-var") == 0 ||
-               strcmp(argv[i], "--second-var") == 0) {
+               strcmp(argv[i], "-second-var") == 0) {
+
+      printf("Identified a second order variable\n");
 
       long nbytes = strlen(argv[++i]) + 1;
       static int total_args = 0;
