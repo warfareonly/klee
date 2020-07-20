@@ -101,7 +101,7 @@ cl::opt<bool> DumpStatesOnHalt(
     cl::desc("Dump test cases for all active states on exit (default=on)"));
 
 int *A_data, *A_data_stat, *arg;
-std::map<string, int> var_map;
+std::map<std::string, int> var_map;
 int count_var = 0;
 
 /// The different query logging solvers that can switched on/off
