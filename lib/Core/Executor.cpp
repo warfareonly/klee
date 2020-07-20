@@ -2946,7 +2946,7 @@ void Executor::run(ExecutionState &initialState) {
         } else {
           uint32_t value = 0;
           for (int i = 0; i < num_bytes; i++) {
-            value += (obj.bytes[i]  << 8 * (num_bytes - i - 1) );
+            value += (obj.bytes[i]  << 8 * (i));
             printf("\t\treading byte value=%d at i=%d and total=%d\n", obj.bytes[i], i, value);
           }
           var_map.insert(std::pair<std::string, int>(obj.name, value));
