@@ -170,6 +170,17 @@ int main(int argc, char *argv[]) {
       sprintf(buf2, "%ld", nbytes - 1);
       argv_copy[argv_copy_idx++] = buf1;
       argv_copy[argv_copy_idx++] = buf2;
+
+    } else if (strcmp(argv[i], "--second-var") == 0 ||
+               strcmp(argv[i], "--second-var") == 0) {
+
+      long nbytes = strlen(argv[++i]) + 1;
+      static int total_args = 0;
+
+      char arg[1024];
+      sprintf(arg, "var%d", total_args++);
+      push_obj(&b, (const char *)arg, nbytes, (unsigned char *)argv[i]);
+
     }
   }
 
@@ -289,12 +300,9 @@ int main(int argc, char *argv[]) {
   }
 
   argv_copy[argv_copy_idx] = 0;
-
   b.numArgs = argv_copy_idx;
   b.args = argv_copy;
-
   push_range(&b, "model_version", 1);
-
   if (!kTest_toFile(&b, "file.bout"))
     assert(0);
 
@@ -302,6 +310,7 @@ int main(int argc, char *argv[]) {
     free(b.objects[i].name);
     free(b.objects[i].bytes);
   }
+
   free(b.objects);
 
   for (int i = 0; i < (int)argv_copy_idx; ++i) {
