@@ -101,7 +101,7 @@ cl::opt<bool> DumpStatesOnHalt(
     cl::desc("Dump test cases for all active states on exit (default=on)"));
 
 int *A_data, *A_data_stat, *arg;
-std::map<std::string, int> var_map;
+std::map<std::string, int*> var_map;
 int count_var = 0;
 
 /// The different query logging solvers that can switched on/off
@@ -2944,14 +2944,15 @@ void Executor::run(ExecutionState &initialState) {
           // Do nothing
 
         } else {
-          uint32_t value = 0;
+          int value_final = 0;
+          int *value = (int *)malloc(num_bytes * sizeof(int));
           for (int i = 0; i < num_bytes; i++) {
-            value += (obj.bytes[i]  << 8 * (i));
-            printf("\t\treading byte value=%d at i=%d and total=%d\n", obj.bytes[i], i, value);
+            value[i] = obj.bytes[i];
+            value_final += (obj.bytes[i]  << 8 * (i));
           }
-          var_map.insert(std::pair<std::string, int>(obj.name, value));
+          var_map.insert(std::pair<std::string, int>(obj.name, *value));
           klee_warning("Reading Second Order Variable, name:%s, size:%d and value:%d",
-                       obj.name, num_bytes, value);
+                       obj.name, num_bytes, value_final);
         }
       }
     }
@@ -3342,11 +3343,11 @@ ref<Expr> Executor::concretizeReadExpr(const ExecutionState &state,
       //errs() << "\n\n SECOND ORDER VAR COLLECTED\n\n";
 //      printf("\n%d-%d-%d\n", var_map.find(name_src), var_map.find(name_src)->second, var_map.end());
       if (var_map.find(name_src) != var_map.end()) {
-        int value = var_map.find(name_src)->second;
+        int value = var_map.find(name_src)->second[index];
         resolve = ConstantExpr::create(value, width);
         modified = true;
-        klee_warning("Concretizing second order variable name:%s and value:%d",
-                     name_src.c_str(), value);
+        klee_warning("Concretizing second order variable name:%s, index:%d and value:%d",
+                     name_src.c_str(), index, value);
       }
     }
 
