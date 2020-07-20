@@ -102,7 +102,7 @@ namespace {
                              cl::init(true),
                              cl::desc("Dump test cases for all active states on exit (default=on)"));
 
-    int *A_data, *A_data_stat;
+    int *A_data, *A_data_stat, *arg, *var;
 
     /// The different query logging solvers that can switched on/off
     enum PrintDebugInstructionsType {
@@ -2940,7 +2940,14 @@ void Executor::run(ExecutionState &initialState) {
                         A_data[i] = obj.bytes[i];
 //                        printf("%d ", A_data[i]);
                     }
+                } else if (strcmp(obj.name, "arg") == 0) {
+                  A_data = (int *) malloc(num_bytes * sizeof(int));
+                  for (int i = 0; i < num_bytes; i++) {
+                    A_data[i] = obj.bytes[i];
+//                        printf("%d ", A_data[i]);
+                  }
                 }
+
 
             }
         }

@@ -176,13 +176,11 @@ int main(int argc, char *argv[]) {
                strcmp(argv[i], "-second-var") == 0) {
 
       printf("Identified a second order variable\n");
-
+      char name[1024];
+      sprintf(name, "%s", (unsigned char *)argv[++i]);
       long nbytes = strlen(argv[++i]) + 1;
-      static int total_args = 0;
-
-      char arg[1024];
-      sprintf(arg, "var%d", total_args++);
-      push_obj(&b, (const char *)arg, nbytes, (unsigned char *)argv[i]);
+      push_obj(&b, (const char *)name, nbytes, (unsigned char *)argv[i]);
+      printf("Name=%s, Value=%s\n",name, argv[i]);
 
     }
   }
