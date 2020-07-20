@@ -2949,8 +2949,8 @@ void Executor::run(ExecutionState &initialState) {
             value[i] = obj.bytes[i];
           }
           var_map.insert(std::pair<char*, int*>(obj.name, value));
-          klee_warning("Reading Second Order Variable, name:%s and value:%d",
-                       obj.name, value);
+          klee_warning("Reading Second Order Variable, name:%s, size:%d and value:%d",
+                       obj.name, num_bytes, value);
         }
       }
     }
@@ -3325,17 +3325,27 @@ ref<Expr> Executor::concretizeReadExpr(const ExecutionState &state,
   //        iterateUpdateList(expr);
   //    errs() << "update list.size: " << base->updates.getSize() << '\n';
   ref<ConstantExpr> resolve;
-  if (name_src == "A-data") {
-    int value = A_data[index];
-    //        errs() << "\n\nDATA COLLECTED: A[" << index << "]: " << value<<
-    //        "\n\n";
-    resolve = ConstantExpr::create(value, width);
-    modified = true;
-  } else if (name_src == "A-data-stat") {
-    //        errs() << "\n\nSTAT COLLECTED\n\n";
-    int value = A_data_stat[index];
-    resolve = ConstantExpr::create(value, width);
-    modified = true;
+  if(usingSeeds){
+    if (name_src == "A-data") {
+      int value = A_data[index];
+      // errs() << "\n\nDATA COLLECTED: A[" << index << "]: " << value<<
+      // "\n\n";
+      resolve = ConstantExpr::create(value, width);
+      modified = true;
+    } else if (name_src == "A-data-stat") {
+      // errs() << "\n\nSTAT COLLECTED\n\n";
+      int value = A_data_stat[index];
+      resolve = ConstantExpr::create(value, width);
+      modified = true;
+    } else{
+      //errs() << "\n\n SECOND ORDER VAR COLLECTED\n\n";
+      int value = var_map.find(name_src)->second;
+      resolve = ConstantExpr::create(value, width);
+      modified = true;
+      klee_warning("Concretizing second order variable name:%s and value:%d",
+                   name_src, value);
+    }
+
   } else {
     ref<Expr> ce;
     ce = ReadExpr::create(base->updates, index_expr);
