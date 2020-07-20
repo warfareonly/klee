@@ -2950,7 +2950,7 @@ void Executor::run(ExecutionState &initialState) {
             value[i] = obj.bytes[i];
             value_final += (obj.bytes[i]  << 8 * (i));
           }
-          var_map.insert(std::pair<std::string, int>(obj.name, *value));
+          var_map.insert(std::pair<std::string, int*>(obj.name, value));
           klee_warning("Reading Second Order Variable, name:%s, size:%d and value:%d",
                        obj.name, num_bytes, value_final);
         }
