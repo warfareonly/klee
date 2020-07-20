@@ -2947,7 +2947,7 @@ void Executor::run(ExecutionState &initialState) {
           uint32_t value = 0;
           for (int i = 0; i < num_bytes; i++) {
             value += (obj.bytes[i]  << 8 * (num_bytes - i - 1) );
-            printf("\t\treading byte value=%d at i=%d and total=%d", obj.bytes[i], i, value );
+            printf("\t\treading byte value=%d at i=%d and total=%d\n", obj.bytes[i], i, value);
           }
           var_map.insert(std::pair<char*, int>(obj.name, value));
           klee_warning("Reading Second Order Variable, name:%s, size:%d and value:%d",
@@ -3340,7 +3340,8 @@ ref<Expr> Executor::concretizeReadExpr(const ExecutionState &state,
       modified = true;
     } else{
       //errs() << "\n\n SECOND ORDER VAR COLLECTED\n\n";
-      int value = var_map.find(name_src.c_str())->second;
+      const char* name = name_src.c_str();
+      int value = var_map.find(name)->second;
       resolve = ConstantExpr::create(value, width);
       modified = true;
       klee_warning("Concretizing second order variable name:%s and value:%d",
