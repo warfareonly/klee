@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
   argv_copy_idx = 1;
 
   for (i = 1; i < (unsigned)argc; i++) {
-    printf("Reading argument flag: %s\n", argv[i])
+    printf("Reading argument flag: %s\n", argv[i]);
     if (strcmp(argv[i], "--sym-stdout") == 0 ||
         strcmp(argv[i], "-sym-stdout") == 0) {
       if (++i == (unsigned)argc || argv[i][0] == '-')
