@@ -180,10 +180,10 @@ int main(int argc, char *argv[]) {
       char value[1024];
       long nbytes = 0;
       sprintf(name, "%s", argv[++i]);
-      sprintf(nbytes, "%ld", argv[++i]);
+      nbytes = atoi(argv[++i]);
       sprintf(value, "%s", argv[++i]);
       push_obj(&b, (const char *)name, nbytes, (unsigned char *)value);
-      printf("\t\tName=%s, Value=%s, Value in Hex=%x\n",name, value, value);
+      printf("\t\tName=%s, Size=%ld, Value=%s, Value in Hex=%x\n",name, nbytes, value, value);
 
     }
   }
