@@ -3341,7 +3341,7 @@ ref<Expr> Executor::concretizeReadExpr(const ExecutionState &state,
     } else{
       //errs() << "\n\n SECOND ORDER VAR COLLECTED\n\n";
 //      printf("\n%d-%d-%d\n", var_map.find(name_src), var_map.find(name_src)->second, var_map.end());
-      if (var_map.find(name_src) != var_map->end()) {
+      if (var_map.find(name_src) != var_map.end()) {
         int value = var_map.find(name_src)->second;
         resolve = ConstantExpr::create(value, width);
         modified = true;
