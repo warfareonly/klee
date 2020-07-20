@@ -183,12 +183,12 @@ int main(int argc, char *argv[]) {
       sprintf(name, "%s", argv[++i]);
       nbytes = atoi(argv[++i]);
       read_value = atoi(argv[++i]);
-      printf("\t\tName=%s, Size=%ld, Value=%s\n",name, nbytes, read_value);
+      printf("\t\tName=%s, Size=%ld, Value=%ld\n",name, nbytes, read_value);
       for (int k = 0; k < nbytes; k++) {
         value[k] = read_value >> 8 * (k);
       }
       push_obj(&b, (const char *)name, nbytes, (unsigned char *)value);
-      printf("\t\tName=%s, Size=%ld, Value=%s, Value in Hex=%x\n",name, nbytes, read_value, value);
+      printf("\t\tName=%s, Size=%ld, Value=%ld, Value in Hex=%x\n",name, nbytes, read_value, value);
 
     }
   }
