@@ -188,7 +188,7 @@ int main(int argc, char *argv[]) {
         value[k] = (unsigned char)read_value >> 8 * (k);
       }
       push_obj(&b, (const char *)name, nbytes, (unsigned char *)value);
-      printf("\t\tName=%s, Size=%ld, Value=%ld, Value in Hex=%s\n",name, nbytes, read_value, *value);
+//      printf("\t\tName=%s, Size=%ld, Value=%ld, Value in Hex=%s\n",name, nbytes, read_value, *value);
 
     }
   }
