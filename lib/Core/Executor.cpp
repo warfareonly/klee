@@ -3345,7 +3345,7 @@ ref<Expr> Executor::concretizeReadExpr(const ExecutionState &state,
       int value = A_data_stat[index];
       resolve = ConstantExpr::create(value, width);
       modified = true;
-    }  else if (strstr(obj.name, "arg") != NULL) {
+    }  else if (strstr(name_src, "arg") != NULL) {
       // errs() << "\n\nARG COLLECTED\n\n";
       if (var_map.find(name_src) != var_map.end()) {
         int value = arg_map.find(name_src)->second[index];
