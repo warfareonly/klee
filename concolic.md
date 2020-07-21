@@ -51,6 +51,7 @@ by using the following command:
 ```
 export LLVM_COMPILER=clang
 wllvm -o example -lkleeRuntest example.c
+extract-bc example
 ```
 
 We need to link with the Klee libraray `libkleeRuntest.so` which is located in the build 
@@ -62,7 +63,7 @@ in Concolic execution. For this purpose we re-arrange our input in ktest file fo
 following command:
 
 ```
-gen-bout --sym-arg <argument> --sym-arg <argument> --second-var <identifer> <size> <value>
+gen-bout  --sym-arg <argument> --second-var <identifer> <size> <value>
 ```
 `gen-bout` can create ktest objects for system arguments using the `--sym-arg` flag followed by the 
 argument itself. This can be used in Klee to concolically execute a program for command line arguments. 
@@ -83,7 +84,7 @@ gen-bout --sym-arg 66 --sym-arg 34 --second-var k 4 23
 #### Command Line Input
 All preparations for the concolic execution are complete at this point,
 the final step is to execute Klee in concolic mode. First, we will illustate
-the use of concrete mode in Klee, using the following command:
+the use of symbolic mode in Klee, using the following command:
 
 ```
 klee --write-smt2s --libc=uclibc --posix-runtime --external-calls=all example.bc --sym-arg 2 --sym-arg 2
