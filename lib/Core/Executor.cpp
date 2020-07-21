@@ -1083,7 +1083,7 @@ void Executor::addConstraint(ExecutionState &state, ref<Expr> condition) {
     if (warn)
       klee_warning("seeds patched for violating constraint");
   }
-  if (!res) {
+  if (!res || (res && usingSeeds)) {
     state.addConstraint(condition);
     if (PrintPath) {
       std::string constraints;
