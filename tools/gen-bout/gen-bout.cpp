@@ -163,7 +163,7 @@ int main(int argc, char *argv[]) {
       static int total_args = 0;
 
       char arg[1024];
-      sprintf(arg, "arg%d", total_args++);
+      sprintf(arg, "arg0%d", total_args++);
       push_obj(&b, (const char *)arg, nbytes, (unsigned char *)argv[i]);
       printf("\t\tName=%s, Size=%ld, Value=%s\n",arg, nbytes, argv[i]);
       char *buf1 = (char *)malloc(1024);
