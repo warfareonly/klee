@@ -100,8 +100,9 @@ cl::opt<bool> DumpStatesOnHalt(
     "dump-states-on-halt", cl::init(true),
     cl::desc("Dump test cases for all active states on exit (default=on)"));
 
-int *A_data, *A_data_stat, *arg;
+int *A_data, *A_data_stat;
 std::map<std::string, int*> var_map;
+std::map<std::string, int*> arg_map;
 int count_var = 0;
 
 /// The different query logging solvers that can switched on/off
@@ -2934,11 +2935,16 @@ void Executor::run(ExecutionState &initialState) {
             //                        printf("%d ", A_data[i]);
           }
         } else if (strcmp(obj.name, "arg") == 0) {
-          A_data = (int *)malloc(num_bytes * sizeof(int));
+          int value_final = 0;
+          int *value = (int *)malloc(num_bytes * sizeof(int));
           for (int i = 0; i < num_bytes; i++) {
-            A_data[i] = obj.bytes[i];
-            //                        printf("%d ", A_data[i]);
+            value[i] = obj.bytes[i];
+            value_final += (obj.bytes[i]  << 8 * (i));
           }
+          arg_map.insert(std::pair<std::string, int*>(obj.name, value));
+          klee_warning("Reading Argument, name:%s, size:%d and value:%d",
+                       obj.name, num_bytes, value_final);
+
         } else if (strcmp(obj.name, "model_version") == 0) {
 
           // Do nothing
@@ -3339,6 +3345,15 @@ ref<Expr> Executor::concretizeReadExpr(const ExecutionState &state,
       int value = A_data_stat[index];
       resolve = ConstantExpr::create(value, width);
       modified = true;
+    }  else if (strstr(obj.name, "arg") != NULL) {
+      // errs() << "\n\nARG COLLECTED\n\n";
+      if (var_map.find(name_src) != var_map.end()) {
+        int value = arg_map.find(name_src)->second[index];
+        resolve = ConstantExpr::create(value, width);
+        modified = true;
+        klee_warning("Concretizing argument name:%s, index:%d and value:%d",
+                     name_src.c_str(), index, value);
+      }
     } else{
       //errs() << "\n\n SECOND ORDER VAR COLLECTED\n\n";
 //      printf("\n%d-%d-%d\n", var_map.find(name_src), var_map.find(name_src)->second, var_map.end());
