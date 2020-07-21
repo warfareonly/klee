@@ -158,13 +158,14 @@ int main(int argc, char *argv[]) {
     } else if (strcmp(argv[i], "--sym-arg") == 0 ||
              strcmp(argv[i], "-sym-arg") == 0) {
 
+      printf("\tIdentified a argument\n");
       long nbytes = strlen(argv[++i]) + 1;
       static int total_args = 0;
 
       char arg[1024];
       sprintf(arg, "arg%d", total_args++);
       push_obj(&b, (const char *)arg, nbytes, (unsigned char *)argv[i]);
-
+      printf("\t\tName=%s, Size=%ld, Value=%s\n",arg, nbytes, argv[i]);
       char *buf1 = (char *)malloc(1024);
       char *buf2 = (char *)malloc(1024);
       strcpy(buf1, "-sym-arg");
