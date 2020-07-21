@@ -2934,7 +2934,7 @@ void Executor::run(ExecutionState &initialState) {
             A_data[i] = obj.bytes[i];
             //                        printf("%d ", A_data[i]);
           }
-        } else if (strstr(obj.name.c_str(), "arg") == 0) {
+        } else if (strstr(obj.name, "arg0") == 0) {
           int value_final = 0;
           int *value = (int *)malloc(num_bytes * sizeof(int));
           for (int i = 0; i < num_bytes; i++) {
