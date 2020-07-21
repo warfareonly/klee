@@ -3327,10 +3327,7 @@ ref<Expr> Executor::concretizeReadExpr(const ExecutionState &state,
   int width = expr->getWidth();
 
   std::string name_src = base->updates.root->name;
-  int name_length = strlen(name_src);
-  char name_array[name_length];
-  strcpy(name_array, name_src.c_str());
-  printf("\nNAME ARRAY: %s\n", *name_array);
+
   //    errs() << "name-src = " << name_src << "\n";
   int updateSize = base->updates.getSize();
   //    if (updateSize > 0)
@@ -3351,7 +3348,7 @@ ref<Expr> Executor::concretizeReadExpr(const ExecutionState &state,
       modified = true;
     }  else if (strstr(name_src.c_str(), "arg0")) {
       // errs() << "\n\nARG COLLECTED\n\n";
-      if (var_map.find(name_src) != var_map.end()) {
+      if (arg_map.find(name_src) != var_map.end()) {
         int value = arg_map.find(name_src)->second[index];
         resolve = ConstantExpr::create(value, width);
         modified = true;
