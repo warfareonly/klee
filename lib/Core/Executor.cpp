@@ -2934,7 +2934,7 @@ void Executor::run(ExecutionState &initialState) {
             A_data[i] = obj.bytes[i];
             //                        printf("%d ", A_data[i]);
           }
-        } else if (strstr(obj.name, "arg0") == 0) {
+        } else if (strstr(obj.name, "arg0")) {
           int value_final = 0;
           int *value = (int *)malloc(num_bytes * sizeof(int));
           for (int i = 0; i < num_bytes; i++) {
@@ -3346,7 +3346,7 @@ ref<Expr> Executor::concretizeReadExpr(const ExecutionState &state,
       int value = A_data_stat[index];
       resolve = ConstantExpr::create(value, width);
       modified = true;
-    }  else if (strstr(name_src.c_str(), arg_regx.c_str()) != NULL) {
+    }  else if (strstr(name_src.c_str(), arg_regx.c_str())) {
       // errs() << "\n\nARG COLLECTED\n\n";
       if (var_map.find(name_src) != var_map.end()) {
         int value = arg_map.find(name_src)->second[index];
