@@ -1,9 +1,11 @@
 import sys
 import os
 import collections
+import random
 from six.moves import cStringIO
 from pysmt.smtlib.parser import SmtLibParser
-from pysmt.shortcuts import get_model, Solver
+from pysmt.shortcuts import get_model, Solver, And, Not, is_sat
+
 
 
 def collect_symbolic_path(log_path, project_path):
@@ -36,17 +38,43 @@ def collect_symbolic_path(log_path, project_path):
     return ppc_list, last_sym_path
 
 
-def analyse_symbolic_path(ppc_list, last_sym_path):
+def analyse_symbolic_path(ppc_list):
     constraint_list = dict()
     for control_loc in reversed(ppc_list):
         ppc = ppc_list[control_loc]
+        ppc = "".join(ppc)
         parser = SmtLibParser()
         script = parser.get_script(cStringIO(ppc))
         formula = script.get_last_formula()
         constraint = formula.arg(1)
         print(control_loc, constraint)
+        if control_loc not in constraint_list:
+            constraint_list[control_loc] = list()
+        constraint_list[control_loc].append(constraint)
+    return constraint_list
+
+
+def generate_new_symbolic_path(constraint_list):
+    chosen_control_loc = random.choice(constraint_list.keys())
+    constraint_list_at_loc = constraint_list[chosen_control_loc]
+    chosen_constraint = random.choice(chosen_control_loc)
+
+    new_path = Not(chosen_constraint)
+    for control_loc in constraint_list:
+        constraint_list_at_loc = constraint_list[control_loc]
+        for constraint in constraint_list_at_loc:
+            if constraint == chosen_constraint and control_loc == chosen_control_loc:
+                continue
+            new_path = And (new_path, constraint)
+
+    if is_sat(new_path):
+        print(new_path)
+    else:
+        generate_new_symbolic_path(constraint_list)
+    return new_path
+
 
 log_path = sys.argv[1]
 project_path = sys.argv[2]
 ppc_list, last_path = collect_symbolic_path(log_path, project_path)
-analyse_symbolic_path(ppc_list, last_path)
+analyse_symbolic_path(ppc_list)
