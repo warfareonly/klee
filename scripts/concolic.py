@@ -77,4 +77,5 @@ def generate_new_symbolic_path(constraint_list):
 log_path = sys.argv[1]
 project_path = sys.argv[2]
 ppc_list, last_path = collect_symbolic_path(log_path, project_path)
-analyse_symbolic_path(ppc_list)
+constraint_list = analyse_symbolic_path(ppc_list)
+generate_new_symbolic_path(constraint_list)
