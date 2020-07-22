@@ -38,9 +38,8 @@ def collect_symbolic_path(log_path, project_path):
 
 def analyse_symbolic_path(ppc_list, last_sym_path):
     constraint_list = dict()
-    control_loc_list = ppc_list.keys()
-    control_loc_list.reverse()
-    for control_loc in control_loc_list:
+
+    for control_loc in reversed(ppc_list):
         ppc = ppc_list[control_loc]
         parser = SmtLibParser()
         script = parser.get_script(cStringIO(ppc))
