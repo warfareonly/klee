@@ -1090,6 +1090,8 @@ void Executor::addConstraint(ExecutionState &state, ref<Expr> condition) {
       std::string constraints;
       getConstraintLog(state, constraints, Interpreter::SMTLIB2);
       errs() << "\n[path:condition] " << state.pc->getSourceLocation() << " : "
+             << condition << "\n";
+      errs() << "\n[path:ppc] " << state.pc->getSourceLocation() << " : "
              << constraints << "\n";
     }
   }
