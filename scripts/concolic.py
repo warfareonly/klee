@@ -57,7 +57,7 @@ def analyse_symbolic_path(ppc_list):
 def generate_new_symbolic_path(constraint_list):
     chosen_control_loc = random.choice(constraint_list.keys())
     constraint_list_at_loc = constraint_list[chosen_control_loc]
-    chosen_constraint = random.choice(chosen_control_loc)
+    chosen_constraint = random.choice(constraint_list_at_loc)
 
     new_path = Not(chosen_constraint)
     for control_loc in constraint_list:
