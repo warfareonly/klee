@@ -38,7 +38,6 @@ def collect_symbolic_path(log_path, project_path):
 
 def analyse_symbolic_path(ppc_list, last_sym_path):
     constraint_list = dict()
-
     for control_loc in reversed(ppc_list):
         ppc = ppc_list[control_loc]
         parser = SmtLibParser()
@@ -47,3 +46,7 @@ def analyse_symbolic_path(ppc_list, last_sym_path):
         constraint = formula.arg(1)
         print(control_loc, constraint)
 
+log_path = sys.argv[1]
+project_path = sys.argv[2]
+ppc_list, last_path = collect_symbolic_path(log_path, project_path)
+analyse_symbolic_path(ppc_list, last_path)
