@@ -55,7 +55,7 @@ def analyse_symbolic_path(ppc_list):
 
 
 def generate_new_symbolic_path(constraint_list):
-    chosen_control_loc = random.choice(constraint_list.keys())
+    chosen_control_loc = random.choice(list(constraint_list.keys()))
     constraint_list_at_loc = constraint_list[chosen_control_loc]
     chosen_constraint = random.choice(constraint_list_at_loc)
 
@@ -74,8 +74,14 @@ def generate_new_symbolic_path(constraint_list):
     return new_path
 
 
+def generate_new_input(symbolic_path):
+    model = get_model(symbolic_path)
+    print(model)
+
+
 log_path = sys.argv[1]
 project_path = sys.argv[2]
 ppc_list, last_path = collect_symbolic_path(log_path, project_path)
 constraint_list = analyse_symbolic_path(ppc_list)
-generate_new_symbolic_path(constraint_list)
+new_path = generate_new_symbolic_path(constraint_list)
+generate_new_input(new_path)
