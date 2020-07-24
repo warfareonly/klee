@@ -2,7 +2,7 @@
 This document explains the use of concolic mode execution in Klee. 
 In order to use this behavior you need to use the custom Klee version at Github Repo: https://github.com/rshariffdeen/klee.git , Git Branch: concolic.
 You can either build the custom Klee using standard build instructions or use the docker image hosted at
-https://hub.docker.com/r/rshariffdeen/klee. 
+https://hub.docker.com/r/rshariffdeen/klee with tag:concolic. 
 
 ### Use Docker
 To use the docker image pull the docker image to your PC
