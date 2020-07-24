@@ -40,7 +40,7 @@ RUN mkdir /stp/build; cd /stp/build; cmake ../source/; make -j32; make install
 RUN mkdir /klee; git clone https://github.com/klee/klee-uclibc.git /klee/uclibc
 RUN cd /klee/uclibc; ./configure --make-llvm-lib; make -j32;
 RUN curl -OL https://github.com/google/googletest/archive/release-1.7.0.zip; mv release-1.7.0.zip /klee/test.zip; cd /klee; unzip test.zip;
-RUN git clone https://github.com/rshariffdeen/klee.git /klee/source; cd /klee/source; git checkout seedmode-external-calls
+RUN git clone https://github.com/rshariffdeen/klee.git /klee/source; cd /klee/source; git checkout concolic
 RUN mkdir /klee/build; cd /klee/build;  cmake -DCMAKE_CXX_FLAGS="-fno-rtti"   -DENABLE_SOLVER_STP=ON   -DENABLE_POSIX_RUNTIME=ON   -DENABLE_KLEE_UCLIBC=ON   -DKLEE_UCLIBC_PATH=/klee/uclibc  -DGTEST_SRC_DIR=/klee/test  -DENABLE_SYSTEM_TESTS=OFF   -DENABLE_UNIT_TESTS=OFF -DLLVM_CONFIG_BINARY=/llvm/llvm-34/build/bin/llvm-config ../source/;
 RUN cd /klee/build; make -j32; make install
 
