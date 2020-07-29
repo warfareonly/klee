@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
   argv_copy_idx = 1;
 
   for (i = 1; i < (unsigned)argc; i++) {
-    printf("Reading argument flag: %s\n", argv[i]);
+
     if (strcmp(argv[i], "--sym-stdout") == 0 ||
         strcmp(argv[i], "-sym-stdout") == 0) {
       if (++i == (unsigned)argc || argv[i][0] == '-')
@@ -143,10 +143,13 @@ int main(int argc, char *argv[]) {
       int num_args = atoi(argv[++i]);
 
       for (int i=0; i < num_args; i++){
+        printf("\tIdentified a argument\n");
         long nbytes = strlen(argv[++i]) + 1;
+        static int total_args = 0;
         char arg[1024];
-        sprintf(arg, "arg%d", total_args++);
+        sprintf(arg, "arg0%d", total_args++);
         push_obj(&b, (const char *)arg, nbytes, (unsigned char *)argv[i]);
+        printf("\t\tName=%s, Size=%ld, Value=%s\n",arg, nbytes, argv[i]);
         char *buf1 = (char *)malloc(1024);
         char *buf2 = (char *)malloc(1024);
         strcpy(buf1, "-sym-arg");
