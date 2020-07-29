@@ -141,9 +141,9 @@ int main(int argc, char *argv[]) {
 
       static int total_args = 0;
       int num_args = atoi(argv[++i]);
+      printf("\tIdentified %d arguments\n", num_args);
 
-      for (int i=0; i < num_args; i++){
-        printf("\tIdentified a argument\n");
+      for (int k=0; k < num_args; k++){
         long nbytes = strlen(argv[++i]) + 1;
         static int total_args = 0;
         char arg[1024];
