@@ -52,7 +52,7 @@ void print_usage_and_exit(char *program_name) {
           "e.g., for using a concrete crashing input as a ktest seed.\n",
           program_name);
   fprintf(stderr, "Usage: %s <arguments>\n", program_name);
-
+  fprintf(stderr, "       --out-file <filename> specify the name of the output file\n");
   fprintf(stderr, "       --sym-arg <argument> are the command-line "
                   "argument of the programs\n");
   fprintf(stderr, "       --sym-args <N args> <arguments> are the command-line "
@@ -74,7 +74,7 @@ void print_usage_and_exit(char *program_name) {
                   "variables followed by each variable's identifier and value pair.\n");
 
   fprintf(stderr,
-          "   Ex: %s -o -p -q file1 --sym-stdin file2 --sym-file file3 "
+          "   Ex: %s --sym-stdin file2 --sym-file file3 "
           "--sym-stdout file4\n",
           program_name);
   exit(1);
@@ -85,6 +85,7 @@ int main(int argc, char *argv[]) {
   unsigned file_counter = 0;
   char *stdout_content_filename = NULL;
   char *stdin_content_filename = NULL;
+  char *output_filename = NULL;
   char *content_filenames_list[1024];
   char **argv_copy;
 
@@ -194,6 +195,13 @@ int main(int argc, char *argv[]) {
       push_obj(&b, (const char *)name, nbytes, (unsigned char *)value);
 //      printf("\t\tName=%s, Size=%ld, Value=%ld, Value in Hex=%s\n",name, nbytes, read_value, *value);
 
+    } else if (strcmp(argv[i], "--out-file") == 0 ||
+               strcmp(argv[i], "-out-file") == 0) {
+      if (++i == (unsigned)argc || argv[i][0] == '-')
+        print_usage_and_exit(argv[0]);
+      if (output_filename)
+        print_usage_and_exit(argv[0]);
+      output_filename = argv[i];
     }
   }
 
@@ -316,7 +324,8 @@ int main(int argc, char *argv[]) {
   b.numArgs = argv_copy_idx;
   b.args = argv_copy;
   push_range(&b, "model_version", 1);
-  if (!kTest_toFile(&b, "file.bout"))
+  char* output_name = output_filename? output_filename: "file.bout";
+  if (!kTest_toFile(&b, output_name))
     assert(0);
 
   for (int i = 0; i < (int)b.numObjects; ++i) {
