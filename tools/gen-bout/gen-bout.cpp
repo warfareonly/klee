@@ -197,6 +197,7 @@ int main(int argc, char *argv[]) {
 
     } else if (strcmp(argv[i], "--out-file") == 0 ||
                strcmp(argv[i], "-out-file") == 0) {
+      printf("\tIdentified output file name\n");
       if (++i == (unsigned)argc || argv[i][0] == '-')
         print_usage_and_exit(argv[0]);
       if (output_filename)
@@ -324,10 +325,10 @@ int main(int argc, char *argv[]) {
   b.numArgs = argv_copy_idx;
   b.args = argv_copy;
   push_range(&b, "model_version", 1);
-  char* output_name = output_filename? output_filename: "file.bout";
+  const char* output_name = output_filename? output_filename: "file.bout";
   if (!kTest_toFile(&b, output_name))
     assert(0);
-
+  printf("\tktest file created: %s\n", output_name);
   for (int i = 0; i < (int)b.numObjects; ++i) {
     free(b.objects[i].name);
     free(b.objects[i].bytes);
