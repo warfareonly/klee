@@ -31,7 +31,7 @@ static const char *warningPrefix = "WARNING";
 static const char *warningOncePrefix = "WARNING ONCE";
 static const char *errorPrefix = "ERROR";
 static const char *notePrefix = "NOTE";
-static const char *ppcPrefix = "PPC";
+static const char *ppcPrefix = "PartialPathCondition";
 
 namespace {
 cl::opt<bool> WarningsOnlyToFile(
