@@ -1091,19 +1091,21 @@ void Executor::addConstraint(ExecutionState &state, ref<Expr> condition) {
   }
 
     state.addConstraint(condition);
-    if (PrintPath || LogPPC) {
+    if (PrintPath) {
       std::string constraints;
       getConstraintLog(state, constraints, Interpreter::SMTLIB2);
       errs() << "\n[path:condition] " << state.pc->getSourceLocation() << " : "
              << condition << "\n";
       errs() << "\n[path:ppc] " << state.pc->getSourceLocation() << " : "
              << constraints << "\n";
-      if (LogPPC) {
-        std:: string log_message;
-        getline(errs, log_message)
-        klee_log_ppc(log_message);
-      }
     }
+    if (LogPPC) {
+      std::string constraints;
+      getConstraintLog(state, constraints, Interpreter::SMTLIB2);
+      std::string log_message = "\n[path:ppc] " + state.pc->getSourceLocation() + " : " + constraints;
+      klee_log_ppc(log_message.c_str());
+    }
+
   if (ivcEnabled)
     doImpliedValueConcretization(state, condition,
                                  ConstantExpr::alloc(1, Expr::Bool));
