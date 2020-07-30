@@ -121,7 +121,7 @@ static void klee_vmessage(const char *pfx, bool onlyToFile, const char *msg,
     va_end(ap2);
   }
 
-  if(*pfx == ppcPrefix)
+  if(*pfx == *ppcPrefix)
     klee_vfmessage(klee_ppc_file, pfx, msg, ap);
   else
    klee_vfmessage(pfx ? klee_warning_file : klee_message_file, pfx, msg, ap);
