@@ -31,6 +31,7 @@ static const char *warningPrefix = "WARNING";
 static const char *warningOncePrefix = "WARNING ONCE";
 static const char *errorPrefix = "ERROR";
 static const char *notePrefix = "NOTE";
+static const char *ppcPrefix = "PPC";
 
 namespace {
 cl::opt<bool> WarningsOnlyToFile(
@@ -120,7 +121,10 @@ static void klee_vmessage(const char *pfx, bool onlyToFile, const char *msg,
     va_end(ap2);
   }
 
-  klee_vfmessage(pfx ? klee_warning_file : klee_message_file, pfx, msg, ap);
+  if(*pfx == ppcPrefix)
+    klee_vfmessage(klee_ppc_file, pfx, msg, ap);
+  else
+   klee_vfmessage(pfx ? klee_warning_file : klee_message_file, pfx, msg, ap);
 }
 
 void klee::klee_message(const char *msg, ...) {
@@ -142,7 +146,7 @@ void klee::klee_message_to_file(const char *msg, ...) {
 void klee::klee_log_ppc(const char *msg, ...) {
   va_list ap;
   va_start(ap, msg);
-  klee_vfmessage(klee_ppc_log, true, msg, ap);
+  klee_vmessage(ppcPrefix, true, msg, ap);
   va_end(ap);
 }
 
