@@ -339,6 +339,11 @@ KleeHandler::KleeHandler(int argc, char **argv)
   if ((klee_message_file = fopen(file_path.c_str(), "w")) == NULL)
     klee_error("cannot open file \"%s\": %s", file_path.c_str(), strerror(errno));
 
+  // open ppc.log
+  file_path = getOutputFilename("ppc.log");
+  if ((klee_ppc_file = fopen(file_path.c_str(), "w")) == NULL)
+    klee_error("cannot open file \"%s\": %s", file_path.c_str(), strerror(errno));
+
   // open info
   m_infoFile = openOutputFile("info");
 }
@@ -348,6 +353,7 @@ KleeHandler::~KleeHandler() {
   delete m_symPathWriter;
   fclose(klee_warning_file);
   fclose(klee_message_file);
+  fclose(klee_ppc_file);
 }
 
 void KleeHandler::setInterpreter(Interpreter *i) {

@@ -25,6 +25,7 @@ using namespace llvm;
 
 FILE *klee::klee_warning_file = NULL;
 FILE *klee::klee_message_file = NULL;
+FILE *klee::klee_ppc_file = NULL;
 
 static const char *warningPrefix = "WARNING";
 static const char *warningOncePrefix = "WARNING ONCE";
@@ -134,6 +135,14 @@ void klee::klee_message_to_file(const char *msg, ...) {
   va_list ap;
   va_start(ap, msg);
   klee_vmessage(NULL, true, msg, ap);
+  va_end(ap);
+}
+
+/* Log PPC to file */
+void klee::klee_log_ppc(const char *msg, ...) {
+  va_list ap;
+  va_start(ap, msg);
+  klee_vfmessage(klee_ppc_log, true, msg, ap);
   va_end(ap);
 }
 

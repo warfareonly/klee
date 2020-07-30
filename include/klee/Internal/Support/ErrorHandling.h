@@ -22,6 +22,7 @@ namespace klee {
 
 extern FILE *klee_warning_file;
 extern FILE *klee_message_file;
+extern FILE *klee_ppc_file;
 
 /// Print "KLEE: ERROR: " followed by the msg in printf format and a
 /// newline on stderr and to warnings.txt, then exit with an error.
@@ -36,6 +37,10 @@ void klee_message(const char *msg, ...) __attribute__((format(printf, 1, 2)));
 /// newline to messages.txt.
 void klee_message_to_file(const char *msg, ...)
     __attribute__((format(printf, 1, 2)));
+
+/// Print PPC
+void klee_log_ppc(const char *msg, ...)
+__attribute__((format(printf, 1, 2)));
 
 /// Print "KLEE: WARNING: " followed by the msg in printf format and a
 /// newline on stderr and to warnings.txt.
