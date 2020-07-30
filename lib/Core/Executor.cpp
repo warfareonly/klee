@@ -169,6 +169,11 @@ cl::opt<bool>
               cl::desc("Output path condition along with source location as "
                        "and when it's updated (default=off)"));
 
+cl::opt<bool>
+    LogPPC("log-ppc", cl::init(false),
+              cl::desc("Log partial path condition along with source location as "
+                       "and when it's updated (default=off)"));
+
 cl::opt<bool> ResolvePath(
     "resolve-path", cl::init(false),
     cl::desc("In seed mode resolve path using seed values (default=off)"));
@@ -1086,15 +1091,17 @@ void Executor::addConstraint(ExecutionState &state, ref<Expr> condition) {
   }
 
     state.addConstraint(condition);
-    if (PrintPath) {
+    if (PrintPath || LogPPC) {
       std::string constraints;
       getConstraintLog(state, constraints, Interpreter::SMTLIB2);
       errs() << "\n[path:condition] " << state.pc->getSourceLocation() << " : "
              << condition << "\n";
       errs() << "\n[path:ppc] " << state.pc->getSourceLocation() << " : "
              << constraints << "\n";
-
-  }
+      if (LogPPC) {
+        klee_log_ppc("\n[path:ppc] %s: $%s", state.pc->getSourceLocation() ,constraints)
+      }
+    }
   if (ivcEnabled)
     doImpliedValueConcretization(state, condition,
                                  ConstantExpr::alloc(1, Expr::Bool));
