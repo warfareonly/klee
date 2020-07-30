@@ -1099,7 +1099,7 @@ void Executor::addConstraint(ExecutionState &state, ref<Expr> condition) {
       errs() << "\n[path:ppc] " << state.pc->getSourceLocation() << " : "
              << constraints << "\n";
       if (LogPPC) {
-        klee_log_ppc("\n[path:ppc] %s: $%s", state.pc->getSourceLocation() ,constraints)
+        klee_log_ppc("\n[path:ppc] %s: $%s", state.pc->getSourceLocation() ,constraints);
       }
     }
   if (ivcEnabled)
