@@ -153,7 +153,7 @@ void klee::klee_log_ppc(const char *msg, ...) {
 void klee::klee_error(const char *msg, ...) {
   va_list ap;
   va_start(ap, msg);
-  klee_vmessage(errorPrefix, false, false msg, ap);
+  klee_vmessage(errorPrefix, false, false, msg, ap);
   va_end(ap);
   exit(1);
 }
