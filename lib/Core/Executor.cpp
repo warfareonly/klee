@@ -1084,7 +1084,7 @@ void Executor::addConstraint(ExecutionState &state, ref<Expr> condition) {
     if (warn)
       klee_warning("seeds patched for violating constraint");
   }
-  if (!res || (res && usingSeeds)) {
+
     state.addConstraint(condition);
     if (PrintPath) {
       std::string constraints;
@@ -1093,7 +1093,7 @@ void Executor::addConstraint(ExecutionState &state, ref<Expr> condition) {
              << condition << "\n";
       errs() << "\n[path:ppc] " << state.pc->getSourceLocation() << " : "
              << constraints << "\n";
-    }
+
   }
   if (ivcEnabled)
     doImpliedValueConcretization(state, condition,
