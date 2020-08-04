@@ -3347,6 +3347,7 @@ ref<Expr> Executor::concretizeReadExpr(const ExecutionState &state,
   //        iterateUpdateList(expr);
   //    errs() << "update list.size: " << base->updates.getSize() << '\n';
   ref<ConstantExpr> resolve;
+
   if(usingSeeds){
     if (name_src == "A-data") {
       int value = A_data[index];
@@ -3377,6 +3378,16 @@ ref<Expr> Executor::concretizeReadExpr(const ExecutionState &state,
         modified = true;
         klee_warning("Concretizing second order variable name:%s, index:%d and value:%d",
                      name_src.c_str(), index, value);
+      }  else {
+        ref<Expr> ce;
+        ce = ReadExpr::create(base->updates, index_expr);
+
+        bool success = solver->getValue(state, ce, resolve);
+        //        errs() << "\n\nDATA COLLECTED: " << name_src << "[" << index_expr
+        //        << "]: " << resolve<< "\n\n";
+        assert(success && "FIXME: Unhandled solver failure");
+        (void)success;
+        modified = true;
       }
     }
 
