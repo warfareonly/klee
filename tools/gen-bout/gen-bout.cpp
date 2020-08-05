@@ -163,31 +163,19 @@ int main(int argc, char *argv[]) {
              strcmp(argv[i], "-sym-arg") == 0) {
 
       printf("\tIdentified a argument\n");
-
+      long nbytes = strlen(argv[++i]) + 1;
       static int total_args = 0;
 
-//      char arg[1024];
-//      sprintf(arg, "arg0%d", total_args++);
-//      push_obj(&b, (const char *)arg, nbytes, (unsigned char *)argv[i]);
-//      printf("\t\tName=%s, Size=%ld, Value=%s\n",arg, nbytes, argv[i]);
-//      char *buf1 = (char *)malloc(1024);
-//      char *buf2 = (char *)malloc(1024);
-//      strcpy(buf1, "-sym-arg");
-//      sprintf(buf2, "%ld", nbytes - 1);
-//      argv_copy[argv_copy_idx++] = buf1;
-//      argv_copy[argv_copy_idx++] = buf2;
-
-      char name[1024];
-      char value[1024];
-      long nbytes = strlen(argv[++i]) + 1;
-      unsigned long read_value = 0;
-      sprintf(name, "arg0%d", total_args++);
-      read_value = atoi(argv[i]);
-      printf("\t\tName=%s, Size=%ld, Value=%ld\n",name, nbytes, read_value);
-      for (int k = nbytes - 1; k >= 0; k--) {
-        value[k] = (read_value >> (8 * (k)) )& 0xFF;
-      }
-      push_obj(&b, (const char *)name, nbytes, (unsigned char *)value);
+      char arg[1024];
+      sprintf(arg, "arg0%d", total_args++);
+      push_obj(&b, (const char *)arg, nbytes, (unsigned char *)argv[i]);
+      printf("\t\tName=%s, Size=%ld, Value=%s\n",arg, nbytes, argv[i]);
+      char *buf1 = (char *)malloc(1024);
+      char *buf2 = (char *)malloc(1024);
+      strcpy(buf1, "-sym-arg");
+      sprintf(buf2, "%ld", nbytes - 1);
+      argv_copy[argv_copy_idx++] = buf1;
+      argv_copy[argv_copy_idx++] = buf2;
 
     } else if (strcmp(argv[i], "--second-var") == 0 ||
                strcmp(argv[i], "-second-var") == 0) {
