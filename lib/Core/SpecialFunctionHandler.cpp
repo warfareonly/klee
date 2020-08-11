@@ -509,8 +509,11 @@ void SpecialFunctionHandler::handlePrintExpr(ExecutionState &state,
 //  printer.generateOutput();
   std::string res = info.str();
   llvm::errs() << msg_str << ":" << res << "\n";
+  std::string log_message = "\n[klee:expr] " + msg_str + " : " + res + "\n";
+  klee_lop_expr(log_message.c_str());
 
 }
+
 
 void SpecialFunctionHandler::handlePrintStatement(ExecutionState &state,
                                              KInstruction *target,
