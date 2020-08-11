@@ -33,6 +33,8 @@ static const char *warningOncePrefix = "WARNING ONCE";
 static const char *errorPrefix = "ERROR";
 static const char *notePrefix = "NOTE";
 static const char *ppcPrefix = "PartialPathCondition";
+static const char *exprPrefix = "VariableExpression";
+
 
 namespace {
 cl::opt<bool> WarningsOnlyToFile(
@@ -157,7 +159,7 @@ void klee::klee_log_ppc(const char *msg, ...) {
 void klee::klee_log_expr(const char *msg, ...) {
   va_list ap;
   va_start(ap, msg);
-  klee_vmessage(ppcPrefix, true, 2, msg, ap);
+  klee_vmessage(exprPrefix, true, 2, msg, ap);
   va_end(ap);
 }
 
