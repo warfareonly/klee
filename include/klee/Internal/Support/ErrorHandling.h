@@ -44,6 +44,10 @@ void klee_message_to_file(const char *msg, ...)
 void klee_log_ppc(const char *msg, ...)
 __attribute__((format(printf, 1, 2)));
 
+/// Log Trace
+    void klee_log_trace(const char *msg, ...)
+    __attribute__((format(printf, 1, 2)));
+
 /// Log Expr
 void klee_log_expr(const char *msg, ...)
 __attribute__((format(printf, 1, 2)));
