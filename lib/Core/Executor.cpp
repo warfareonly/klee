@@ -1600,7 +1600,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
              << "\n";
 
     if (LogTrace) {
-          std::string log_message = "\n[klee:trace] " + sourceLoc + " - " + ki->inst->getOpcode();
+          std::string log_message = "\n[klee:trace] " + sourceLoc ;
           klee_log_trace(log_message.c_str());
       }
 
