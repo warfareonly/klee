@@ -174,6 +174,11 @@ cl::opt<bool>
               cl::desc("Log partial path condition along with source location as "
                        "and when it's updated (default=off)"));
 
+cl::opt<bool>
+     LogTrace("log-trace", cl::init(false),
+                   cl::desc("Log instruction trace with source location as "
+                            "and when it's executed (default=off)"));
+
 cl::opt<bool> ResolvePath(
     "resolve-path", cl::init(false),
     cl::desc("In seed mode resolve path using seed values (default=off)"));
@@ -1593,6 +1598,11 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
     if (PrintTrace)
       errs() << "\n[trace] " << sourceLoc << " - " << ki->inst->getOpcode()
              << "\n";
+
+    if (LogTrace) {
+          std::string log_message = "\n[klee:trace] " + sourceLoc + " - " + ki->inst->getOpcode();
+          klee_log_trace(log_message.c_str());
+      }
 
     if (PrintLLVMInstr)
       errs() << "\n[LLVM] " << *(ki->inst) << "\n";
