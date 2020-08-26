@@ -1099,15 +1099,15 @@ void Executor::addConstraint(ExecutionState &state, ref<Expr> condition) {
     if (PrintPath) {
       std::string constraints;
       getConstraintLog(state, constraints, Interpreter::SMTLIB2);
-      errs() << "\n[path:condition] " << state.pc->getSourceLocation() << " : "
+      errs() << "\n[path:condition] " << state.prevPC->getSourceLocation() << " : "
              << condition << "\n";
-      errs() << "\n[path:ppc] " << state.pc->getSourceLocation() << " : "
+      errs() << "\n[path:ppc] " << state.prevPC->getSourceLocation() << " : "
              << constraints << "\n";
     }
     if (LogPPC) {
       std::string constraints;
       getConstraintLog(state, constraints, Interpreter::SMTLIB2);
-      std::string log_message = "\n[path:ppc] " + state.pc->getSourceLocation() + " : " + constraints;
+      std::string log_message = "\n[path:ppc] " + state.prevPC->getSourceLocation() + " : " + constraints;
       klee_log_ppc(log_message.c_str());
     }
 
