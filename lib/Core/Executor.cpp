@@ -1612,8 +1612,8 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
              << "\n";
 
     if (LogTrace) {
-      if (TraceFilter) {
-        if (sourceLoc.find(TraceFilter, 0) == string::npos) {
+      if (!TraceFilter.empty()) {
+        if (sourceLoc.find(TraceFilter, 0) == std::string::npos) {
           std::string log_message = "\n[klee:trace] " + sourceLoc;
           klee_log_trace(log_message.c_str());
         }
