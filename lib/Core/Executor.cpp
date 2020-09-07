@@ -2965,7 +2965,7 @@ void Executor::run(ExecutionState &initialState) {
     size_t pos = 0;
     std::string token;
     while ((pos = LocHit.find(delimiter)) != std::string::npos) {
-      token = s.substr(0, pos);
+      token = LocHit.substr(0, pos);
       hit_list.push_back(token);
       LocHit.erase(0, pos + delimiter.length());
     }
