@@ -1618,7 +1618,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
           klee_log_trace(log_message.c_str());
         }
       } else if(!LocHit.empty()){
-        if(std::find(hit_list.begin(), hit_list.end(), sourceLoc) != v.end()){
+        if(std::find(hit_list.begin(), hit_list.end(), sourceLoc) != hit_list.end()){
           std::string log_message = "\n[klee:trace] " + sourceLoc;
           klee_log_trace(log_message.c_str());
         }
