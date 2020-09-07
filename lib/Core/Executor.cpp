@@ -2963,13 +2963,13 @@ void Executor::run(ExecutionState &initialState) {
   if (!LocHit.empty()){
     std::string delimiter = ",";
     size_t pos = 0;
-    std::string token;
+    std::string token = LocHit;
     while ((pos = LocHit.find(delimiter)) != std::string::npos) {
       token = LocHit.substr(0, pos);
       hit_list.push_back(token);
       LocHit.erase(0, pos + delimiter.length());
     }
-
+    hit_list.push_back(token);
   }
 
 
