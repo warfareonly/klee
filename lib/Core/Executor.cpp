@@ -183,11 +183,11 @@ cl::opt<bool>
                             "and when it's executed (default=off)"));
 
 cl::opt<std::string> LocHit(
-            "hit-locations", cl::init(false),
+            "hit-locations", cl::init(""),
             cl::desc("Log given locations in trace.log if its witnessed (default=log everything)"));
 
 cl::opt<std::string> TraceFilter(
-            "trace-filter", cl::init(false),
+            "trace-filter", cl::init(""),
             cl::desc("filter criteria for the trace log (default=None)"));
 
 cl::opt<bool> ResolvePath(
