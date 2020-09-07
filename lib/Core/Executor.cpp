@@ -101,7 +101,7 @@ cl::opt<bool> DumpStatesOnHalt(
     cl::desc("Dump test cases for all active states on exit (default=on)"));
 
 int *A_data, *A_data_stat;
-std::string *hit_list;
+std::vector<std::string> hit_list;
 std::string trace_filter;
 std::map<std::string, int*> var_map;
 std::map<std::string, int*> arg_map;
@@ -1617,7 +1617,14 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
           std::string log_message = "\n[klee:trace] " + sourceLoc;
           klee_log_trace(log_message.c_str());
         }
-      } else {
+      } else if(!LocHit.empty()){
+        if(std::find(hit_list.begin(), hit_list.end(), sourceLoc) != v.end()){
+          std::string log_message = "\n[klee:trace] " + sourceLoc;
+          klee_log_trace(log_message.c_str());
+        }
+
+      }
+      else {
         std::string log_message = "\n[klee:trace] " + sourceLoc;
         klee_log_trace(log_message.c_str());
       }
@@ -2952,7 +2959,18 @@ void Executor::run(ExecutionState &initialState) {
 
   states.insert(&initialState);
 
-  // initialize trace filter and hit locations
+  // initialize hit locations
+  if (!LocHit.empty()){
+    std::string delimiter = ",";
+    size_t pos = 0;
+    std::string token;
+    while ((pos = LocHit.find(delimiter)) != std::string::npos) {
+      token = s.substr(0, pos);
+      hit_list.push_back(token);
+      LocHit.erase(0, pos + delimiter.length());
+    }
+
+  }
 
 
   if (usingSeeds) {
