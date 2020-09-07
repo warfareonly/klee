@@ -101,8 +101,11 @@ cl::opt<bool> DumpStatesOnHalt(
     cl::desc("Dump test cases for all active states on exit (default=on)"));
 
 int *A_data, *A_data_stat;
+std::string *hit_list;
+std::string trace_filter;
 std::map<std::string, int*> var_map;
 std::map<std::string, int*> arg_map;
+
 int count_var = 0;
 
 /// The different query logging solvers that can switched on/off
@@ -179,6 +182,14 @@ cl::opt<bool>
                    cl::desc("Log instruction trace with source location as "
                             "and when it's executed (default=off)"));
 
+cl::opt<std::string> LocHit(
+            "hit-locations", cl::init(false),
+            cl::desc("Log given locations in trace.log if its witnessed (default=log everything)"));
+
+cl::opt<std::string> TraceFilter(
+            "trace-filter", cl::init(false),
+            cl::desc("filter criteria for the trace log (default=None)"));
+
 cl::opt<bool> ResolvePath(
     "resolve-path", cl::init(false),
     cl::desc("In seed mode resolve path using seed values (default=off)"));
@@ -212,6 +223,7 @@ cl::opt<bool> EmitAllErrors(
     "emit-all-errors", cl::init(false),
     cl::desc("Generate tests cases for all errors "
              "(default=off, i.e. one per (error,instruction) pair)"));
+
 
 enum class ExternalCallPolicy {
   None,     // No external calls allowed
@@ -1600,9 +1612,17 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
              << "\n";
 
     if (LogTrace) {
-          std::string log_message = "\n[klee:trace] " + sourceLoc ;
+      if (TraceFilter) {
+        if (sourceLoc.find(TraceFilter, 0) == string::npos) {
+          std::string log_message = "\n[klee:trace] " + sourceLoc;
           klee_log_trace(log_message.c_str());
+        }
+      } else {
+        std::string log_message = "\n[klee:trace] " + sourceLoc;
+        klee_log_trace(log_message.c_str());
       }
+
+    }
 
     if (PrintLLVMInstr)
       errs() << "\n[LLVM] " << *(ki->inst) << "\n";
@@ -2931,6 +2951,9 @@ void Executor::run(ExecutionState &initialState) {
   initTimers();
 
   states.insert(&initialState);
+
+  // initialize trace filter and hit locations
+
 
   if (usingSeeds) {
     std::vector<SeedInfo> &v = seedMap[&initialState];
