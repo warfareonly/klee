@@ -1083,7 +1083,7 @@ void Executor::addConstraint(ExecutionState &state, ref<Expr> condition) {
       if (res) {
         //        siit->patchSeed(state, condition, solver);
         warn = true;
-        errs() << "violating expr: " << condition << "\n";
+//        errs() << "violating expr: " << condition << "\n";
       }
     }
     if (warn)
