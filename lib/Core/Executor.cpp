@@ -101,8 +101,11 @@ cl::opt<bool> DumpStatesOnHalt(
     cl::desc("Dump test cases for all active states on exit (default=on)"));
 
 int *A_data, *A_data_stat;
+std::vector<std::string> hit_list;
+std::string trace_filter;
 std::map<std::string, int*> var_map;
 std::map<std::string, int*> arg_map;
+
 int count_var = 0;
 
 /// The different query logging solvers that can switched on/off
@@ -174,6 +177,19 @@ cl::opt<bool>
               cl::desc("Log partial path condition along with source location as "
                        "and when it's updated (default=off)"));
 
+cl::opt<bool>
+     LogTrace("log-trace", cl::init(false),
+                   cl::desc("Log instruction trace with source location as "
+                            "and when it's executed (default=off)"));
+
+cl::opt<std::string> LocHit(
+            "hit-locations", cl::init(""),
+            cl::desc("Log given locations in trace.log if its witnessed (default=log everything)"));
+
+cl::opt<std::string> TraceFilter(
+            "trace-filter", cl::init(""),
+            cl::desc("filter criteria for the trace log (default=None)"));
+
 cl::opt<bool> ResolvePath(
     "resolve-path", cl::init(false),
     cl::desc("In seed mode resolve path using seed values (default=off)"));
@@ -207,6 +223,7 @@ cl::opt<bool> EmitAllErrors(
     "emit-all-errors", cl::init(false),
     cl::desc("Generate tests cases for all errors "
              "(default=off, i.e. one per (error,instruction) pair)"));
+
 
 enum class ExternalCallPolicy {
   None,     // No external calls allowed
@@ -1094,15 +1111,15 @@ void Executor::addConstraint(ExecutionState &state, ref<Expr> condition) {
     if (PrintPath) {
       std::string constraints;
       getConstraintLog(state, constraints, Interpreter::SMTLIB2);
-      errs() << "\n[path:condition] " << state.pc->getSourceLocation() << " : "
+      errs() << "\n[path:condition] " << state.prevPC->getSourceLocation() << " : "
              << condition << "\n";
-      errs() << "\n[path:ppc] " << state.pc->getSourceLocation() << " : "
+      errs() << "\n[path:ppc] " << state.prevPC->getSourceLocation() << " : "
              << constraints << "\n";
     }
     if (LogPPC) {
       std::string constraints;
       getConstraintLog(state, constraints, Interpreter::SMTLIB2);
-      std::string log_message = "\n[path:ppc] " + state.pc->getSourceLocation() + " : " + constraints;
+      std::string log_message = "\n[path:ppc] " + state.prevPC->getSourceLocation() + " : " + constraints;
       klee_log_ppc(log_message.c_str());
     }
 
@@ -1593,6 +1610,26 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
     if (PrintTrace)
       errs() << "\n[trace] " << sourceLoc << " - " << ki->inst->getOpcode()
              << "\n";
+
+    if (LogTrace) {
+      if (!TraceFilter.empty()) {
+        if (sourceLoc.find(TraceFilter, 0) == std::string::npos) {
+          std::string log_message = "\n[klee:trace] " + sourceLoc;
+          klee_log_trace(log_message.c_str());
+        }
+      } else if(!LocHit.empty()){
+        if(std::find(hit_list.begin(), hit_list.end(), sourceLoc) != hit_list.end()){
+          std::string log_message = "\n[klee:trace] " + sourceLoc;
+          klee_log_trace(log_message.c_str());
+        }
+
+      }
+      else {
+        std::string log_message = "\n[klee:trace] " + sourceLoc;
+        klee_log_trace(log_message.c_str());
+      }
+
+    }
 
     if (PrintLLVMInstr)
       errs() << "\n[LLVM] " << *(ki->inst) << "\n";
@@ -2921,6 +2958,20 @@ void Executor::run(ExecutionState &initialState) {
   initTimers();
 
   states.insert(&initialState);
+
+  // initialize hit locations
+  if (!LocHit.empty()){
+    std::string delimiter = ",";
+    size_t pos = 0;
+    std::string token;
+    while ((pos = LocHit.find(delimiter)) != std::string::npos) {
+      token = LocHit.substr(0, pos);
+      hit_list.push_back(token);
+      LocHit.erase(0, pos + delimiter.length());
+    }
+    hit_list.push_back(LocHit);
+  }
+
 
   if (usingSeeds) {
     std::vector<SeedInfo> &v = seedMap[&initialState];
