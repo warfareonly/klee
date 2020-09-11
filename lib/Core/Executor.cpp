@@ -3322,7 +3322,7 @@ void Executor::terminateStateOnError(ExecutionState &state,
       msg << "assembly.ll line: " << ii.assemblyLine << "\n";
     }
 
-    if (usingSeeds && PrintPath) {
+    if (usingSeeds && !NoExitOnError) {
       //            interpreterHandler->processTestCase(state,
       //            msg.str().c_str(), suffix);
       exit(0);
