@@ -3325,7 +3325,8 @@ void Executor::terminateStateOnError(ExecutionState &state,
     if (usingSeeds && !NoExitOnError) {
       //            interpreterHandler->processTestCase(state,
       //            msg.str().c_str(), suffix);
-      exit(0);
+      haltExecution = true;
+
     }
 
     msg << "Stack: \n";
