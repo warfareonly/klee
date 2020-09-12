@@ -1122,8 +1122,15 @@ void Executor::addConstraint(ExecutionState &state, ref<Expr> condition) {
       std::string log_message = "\n[path:ppc] " + state.prevPC->getSourceLocation() + " : " + constraints;
       klee_log_ppc(log_message.c_str());
     }
-
-  if (ivcEnabled)
+    if (LogTrace) {
+      if (!TraceFilter.empty()) {
+        if (TraceFilter == "control-loc") {
+          std::string log_message = "\n[klee:trace] " + state.prevPC->getSourceLocation();
+          klee_log_trace(log_message.c_str());
+        }
+      }
+    }
+    if (ivcEnabled)
     doImpliedValueConcretization(state, condition,
                                  ConstantExpr::alloc(1, Expr::Bool));
 }
