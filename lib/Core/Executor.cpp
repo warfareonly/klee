@@ -1100,7 +1100,7 @@ void Executor::addConstraint(ExecutionState &state, ref<Expr> condition) {
       if (res) {
         //        siit->patchSeed(state, condition, solver);
         warn = true;
-        errs() << "violating expr: " << condition << "\n";
+//        errs() << "violating expr: " << condition << "\n";
       }
     }
     if (warn)
@@ -1122,8 +1122,15 @@ void Executor::addConstraint(ExecutionState &state, ref<Expr> condition) {
       std::string log_message = "\n[path:ppc] " + state.prevPC->getSourceLocation() + " : " + constraints;
       klee_log_ppc(log_message.c_str());
     }
-
-  if (ivcEnabled)
+    if (LogTrace) {
+      if (!TraceFilter.empty()) {
+        if (TraceFilter == "control-loc") {
+          std::string log_message = "\n[klee:trace] " + state.prevPC->getSourceLocation();
+          klee_log_trace(log_message.c_str());
+        }
+      }
+    }
+    if (ivcEnabled)
     doImpliedValueConcretization(state, condition,
                                  ConstantExpr::alloc(1, Expr::Bool));
 }
@@ -3322,10 +3329,11 @@ void Executor::terminateStateOnError(ExecutionState &state,
       msg << "assembly.ll line: " << ii.assemblyLine << "\n";
     }
 
-    if (usingSeeds && PrintPath) {
+    if (usingSeeds && !NoExitOnError) {
       //            interpreterHandler->processTestCase(state,
       //            msg.str().c_str(), suffix);
-      exit(0);
+      haltExecution = true;
+
     }
 
     msg << "Stack: \n";

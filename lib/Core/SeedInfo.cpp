@@ -26,25 +26,26 @@ KTestObject *SeedInfo::getNextInput(const MemoryObject *mo,
     
     for (i=0; i<input->numObjects; ++i) {
       KTestObject *obj = &input->objects[i];
-      if (std::string(obj->name) == mo->name)
-        if (used.insert(obj).second)
+      if (std::string(obj->name) == mo->name) {
+          used.insert(obj);
           return obj;
+      }
     }
     
     // If first unused input matches in size then accept that as
     // well.
-    for (i=0; i<input->numObjects; ++i)
-      if (!used.count(&input->objects[i]))
-        break;
-    if (i<input->numObjects) {
-      KTestObject *obj = &input->objects[i];
-      if (obj->numBytes == mo->size) {
-        used.insert(obj);
-        klee_warning_once(mo, "using seed input %s[%d] for: %s (no name match)",
-                          obj->name, obj->numBytes, mo->name.c_str());
-        return obj;
-      }
-    }
+//    for (i=0; i<input->numObjects; ++i)
+//      if (!used.count(&input->objects[i]))
+//        break;
+//    if (i<input->numObjects) {
+//      KTestObject *obj = &input->objects[i];
+//      if (obj->numBytes == mo->size) {
+//        used.insert(obj);
+//        klee_warning_once(mo, "using seed input %s[%d] for: %s (no name match)",
+//                          obj->name, obj->numBytes, mo->name.c_str());
+//        return obj;
+//      }
+//    }
     
     klee_warning_once(mo, "no seed input for: %s", mo->name.c_str());
     return 0;
