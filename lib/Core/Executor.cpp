@@ -3410,7 +3410,8 @@ ref<Expr> Executor::concretizeReadExpr(const ExecutionState &state,
   if(usingSeeds){
     if (name_src == "A-data") {
       int value = A_data[index];
-      // errs() << "\n\nDATA COLLECTED: A[" << index << "]: " << value<<
+      klee_warning("Concretizing file data at index:%d and value:%d",
+                   index, value);
       // "\n\n";
       resolve = ConstantExpr::create(value, width);
       modified = true;
