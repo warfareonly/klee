@@ -2976,7 +2976,7 @@ void Executor::run(ExecutionState &initialState) {
       hit_list.insert(token);
       LocHit.erase(0, pos + delimiter.length());
     }
-    hit_list.push_back(LocHit);
+    hit_list.insert(LocHit);
   }
 
 
