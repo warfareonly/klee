@@ -101,7 +101,7 @@ cl::opt<bool> DumpStatesOnHalt(
     cl::desc("Dump test cases for all active states on exit (default=on)"));
 
 int *A_data, *A_data_stat;
-std::vector<std::string> hit_list;
+std::set<std::string> hit_list;
 std::string trace_filter;
 std::map<std::string, int*> var_map;
 std::map<std::string, int*> arg_map;
@@ -2973,7 +2973,7 @@ void Executor::run(ExecutionState &initialState) {
     std::string token;
     while ((pos = LocHit.find(delimiter)) != std::string::npos) {
       token = LocHit.substr(0, pos);
-      hit_list.push_back(token);
+      hit_list.insert(token);
       LocHit.erase(0, pos + delimiter.length());
     }
     hit_list.push_back(LocHit);
