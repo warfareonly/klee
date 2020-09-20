@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
       printf("\tIdentified %d arguments\n", num_args);
 
       for (int k=0; k < num_args; k++){
-        long nbytes = strlen(argv[++i]);
+        long nbytes = strlen(argv[++i]) + 1;
         static int total_args = 0;
         char arg[1024];
         sprintf(arg, "arg0%d", total_args++);
@@ -163,7 +163,7 @@ int main(int argc, char *argv[]) {
              strcmp(argv[i], "-sym-arg") == 0) {
 
       printf("\tIdentified a argument\n");
-      long nbytes = strlen(argv[++i]);
+      long nbytes = strlen(argv[++i]) + 1;
       static int total_args = 0;
 
       char arg[1024];
