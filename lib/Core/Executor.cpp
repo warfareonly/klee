@@ -1119,8 +1119,11 @@ void Executor::addConstraint(ExecutionState &state, ref<Expr> condition) {
     if (LogPPC) {
       std::string constraints;
       getConstraintLog(state, constraints, Interpreter::SMTLIB2);
-      std::string log_message = "\n[path:ppc] " + state.prevPC->getSourceLocation() + " : " + constraints;
-      klee_log_ppc(log_message.c_str());
+      std::string sourceLoc = state.prevPC->getSourceLocation();
+      if (sourceLoc.find("klee") == std::string::npos) {
+          std::string log_message = "\n[path:ppc] " + sourceLoc + " : " + constraints;
+          klee_log_ppc(log_message.c_str());
+      }
     }
     if (LogTrace) {
       if (!TraceFilter.empty()) {
