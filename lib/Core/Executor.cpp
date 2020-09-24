@@ -1733,7 +1733,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
       //                errs() << "\ncon-cond=" << cond << "\n";
       cond = optimizer.optimizeExpr(cond, false);
       //                errs() << "\nopt-cond=" << cond << "\n";
-      if (usingSeeds && (ResolvePath || (hit_list.empty() && !LocHit.empty()))) {
+      if (usingSeeds && (ResolvePath )) {
         cond = concretizeExpr(state, cond);
       }
       Executor::StatePair branches = fork(state, cond, false);
