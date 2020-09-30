@@ -28,6 +28,7 @@ FILE *klee::klee_message_file = NULL;
 FILE *klee::klee_ppc_file = NULL;
 FILE *klee::klee_expr_file = NULL;
 FILE *klee::klee_trace_file = NULL;
+FILE *klee::klee_concrete_file = NULL;
 
 
 static const char *warningPrefix = "WARNING";
@@ -37,6 +38,7 @@ static const char *notePrefix = "NOTE";
 static const char *ppcPrefix = "PartialPathCondition";
 static const char *exprPrefix = "VariableExpression";
 static const char *tracePrefix = "TRACE";
+static const char *concretePrefix = "CONCRETE";
 
 
 namespace {
@@ -133,6 +135,8 @@ static void klee_vmessage(const char *pfx, bool onlyToFile, int log_mode, const 
     klee_vfmessage(klee_expr_file, pfx, msg, ap);
   else if(log_mode == 3)
     klee_vfmessage(klee_trace_file, pfx, msg, ap);
+  else if(log_mode == 4)
+    klee_vfmessage(klee_concrete_file, pfx, msg, ap);
   else
    klee_vfmessage(pfx ? klee_warning_file : klee_message_file, pfx, msg, ap);
 }
@@ -157,6 +161,14 @@ void klee::klee_log_ppc(const char *msg, ...) {
   va_list ap;
   va_start(ap, msg);
   klee_vmessage(ppcPrefix, true, 1, msg, ap);
+  va_end(ap);
+}
+
+/* Log Concrete values to file */
+void klee::klee_log_concrete(const char *msg, ...) {
+  va_list ap;
+  va_start(ap, msg);
+  klee_vmessage(concretePrefix, true, 4, msg, ap);
   va_end(ap);
 }
 

@@ -3414,6 +3414,8 @@ ref<Expr> Executor::concretizeReadExpr(const ExecutionState &state,
   if(usingSeeds){
     if (name_src == "A-data") {
       int value = A_data[index];
+        std::string log_message = "\n[concretizing] A-data[" + index + "] = " + value + " \n";
+        klee_log_concrete(log_message.c_str());
 //      klee_warning("Concretizing file data at index:%d and value:%d",
 //                   index, value);
       // "\n\n";
