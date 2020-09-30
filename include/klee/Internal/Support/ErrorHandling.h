@@ -48,6 +48,9 @@ __attribute__((format(printf, 1, 2)));
 /// Log Trace
     void klee_log_trace(const char *msg, ...)
     __attribute__((format(printf, 1, 2)));
+/// Log Concretization
+    void klee_log_concrete(const char *msg, ...)
+    __attribute__((format(printf, 1, 2)));
 
 /// Log Expr
 void klee_log_expr(const char *msg, ...)
