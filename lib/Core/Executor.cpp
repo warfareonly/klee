@@ -1106,8 +1106,10 @@ void Executor::addConstraint(ExecutionState &state, ref<Expr> condition) {
     if (warn)
       klee_warning("seeds patched for violating constraint");
   }
-
-    state.addConstraint(condition);
+    std::string sourceLoc = state.prevPC->getSourceLocation();
+    if (sourceLoc.find("_check.c") == std::string::npos) {
+        state.addConstraint(condition);
+    }
     if (PrintPath) {
       std::string constraints;
       getConstraintLog(state, constraints, Interpreter::SMTLIB2);
@@ -1119,7 +1121,7 @@ void Executor::addConstraint(ExecutionState &state, ref<Expr> condition) {
     if (LogPPC) {
       std::string constraints;
       getConstraintLog(state, constraints, Interpreter::SMTLIB2);
-      std::string sourceLoc = state.prevPC->getSourceLocation();
+
       if (sourceLoc.find("klee") == std::string::npos) {
           std::string log_message = "\n[path:ppc] " + sourceLoc + " : " + constraints;
           klee_log_ppc(log_message.c_str());
