@@ -1123,7 +1123,7 @@ void Executor::addConstraint(ExecutionState &state, ref<Expr> condition) {
       getConstraintLog(state, constraints, Interpreter::SMTLIB2);
 
       if (sourceLoc.find("klee") == std::string::npos) {
-          std::string log_message = "\n[path:ppc] " + sourceLoc + ":" + constraints;
+          std::string log_message = "\n[path:ppc] " + sourceLoc + " : " + constraints;
           klee_log_ppc(log_message.c_str());
       }
     }
