@@ -1,5 +1,8 @@
-FROM ubuntu:16.04
+# FROM ubuntu:16.04
+FROM ubuntu:18.04
 MAINTAINER Ridwan Shariffdeen <ridwan@comp.nus.edu.sg>
+
+ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
     autoconf \
@@ -12,12 +15,16 @@ RUN apt-get update && apt-get install -y \
     libboost-all-dev \
     libgoogle-perftools-dev \
     libncurses5-dev \
+    iputils-ping \
+    netcat-openbsd \
     minisat \
     nano \
-    ninja \
+    # ninja \
+    ninja-build \
+    sudo \
     perl \
     python \
-    python-pip \
+    # python-pip \
     python3-pip \
     software-properties-common \
     subversion \
@@ -39,6 +46,7 @@ RUN mkdir /stp; git clone https://github.com/stp/stp.git /stp/source
 RUN mkdir /stp/build; cd /stp/build; cmake ../source/; make -j32; make install
 
 RUN ln -sf /usr/bin/llvm-config-6.0 /usr/bin/llvm-config
+RUN ln -sf /usr/bin/clang-6.0 /usr/bin/clang
 
 RUN mkdir /klee; git clone https://github.com/klee/klee-uclibc.git /klee/uclibc
 RUN cd /klee/uclibc; ./configure --make-llvm-lib; make ;
@@ -77,9 +85,10 @@ RUN pip3 install wllvm
 # RUN pip3 install wllvm flask
 
 RUN useradd -m klee && \
-    echo klee:klee | chpasswd 
+    echo klee:klee | chpasswd && \
+    cp /etc/sudoers /etc/sudoers.bak && \
+    echo 'klee  ALL=(root) NOPASSWD: ALL' >> /etc/sudoers
 
-RUN usermod -aG sudo klee
 
 USER klee
 WORKDIR /home/klee
